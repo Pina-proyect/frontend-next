@@ -43,7 +43,9 @@ function AuthCallbackContent() {
     const tryCookieRefresh = async () => {
       try {
         // Intento de refresh usando cookie HttpOnly del backend
-        const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/pina";
+        // Nota: usamos ruta relativa para aprovechar los rewrites y el mismo origen,
+        // lo cual permite el envío de cookies HttpOnly sin CORS.
+        const api = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
         const res = await fetch(`${api}/auth/refresh`, {
           method: "POST",
           // credentials: 'include' permite enviar cookies al backend

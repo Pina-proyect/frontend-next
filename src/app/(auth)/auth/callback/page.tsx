@@ -33,7 +33,8 @@ function AuthCallbackContent() {
 
     const tryCookieRefresh = async () => {
       try {
-        const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/pina";
+        // Usar ruta relativa para evitar CORS y habilitar cookies HttpOnly
+        const api = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
         const res = await fetch(`${api}/auth/refresh`, {
           method: "POST",
           credentials: "include",
