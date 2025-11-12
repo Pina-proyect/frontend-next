@@ -19,8 +19,8 @@ async function getHealth(): Promise<{ status: string; timestamp: string; env: st
 export default async function DiagnosticsPage() {
   // Lectura de cookies en el servidor (HttpOnly disponibles aquí).
   const cookieStore = cookies();
-  const hasRefresh = cookieStore.has("refreshToken") || cookieStore.has("refresh_token");
-  const hasAccess = cookieStore.has("accessToken");
+  const hasRefresh = Boolean(cookieStore.get("refreshToken") || cookieStore.get("refresh_token"));
+  const hasAccess = Boolean(cookieStore.get("accessToken"));
 
   const health = await getHealth();
 
