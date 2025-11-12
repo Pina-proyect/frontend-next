@@ -18,6 +18,8 @@ export default function DashboardPage() {
   const storedAccess = useAuthStore((s) => s.accessToken);
   const storedRefresh = useAuthStore((s) => s.refreshToken);
 
+  // Efecto inicial: intenta verificar la sesión llamando a `/auth/me`.
+  // Si hay tokens en el store, se sincronizan con el perfil recibido.
   useEffect(() => {
     let mounted = true;
     const verify = async () => {
@@ -44,12 +46,15 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Acción de logout: limpia estado local (Zustand) y redirige a /login.
   const handleLogout = () => {
     clearAuthSession();
     toast({ title: "Sesión cerrada", description: "Has salido correctamente" });
     router.replace("/login");
   };
 
+  // Acción de refresh manual: solicita nuevos tokens usando cookie HttpOnly
+  // y actualiza el estado con `setAuthSession`.
   const handleRefresh = async () => {
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
