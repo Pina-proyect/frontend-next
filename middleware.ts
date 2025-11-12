@@ -19,7 +19,7 @@ export function middleware(req: NextRequest) {
 
   // Revisamos cookies típicas de sesión (nombres comunes).
   // NOTA: El backend Nest debería establecer `refreshToken` como HttpOnly.
-  const hasRefresh = req.cookies.has("refreshToken");
+  const hasRefresh = req.cookies.has("refreshToken") || req.cookies.has("refresh_token");
   const hasAccess = req.cookies.has("accessToken");
 
   if (hasRefresh || hasAccess) {

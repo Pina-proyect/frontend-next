@@ -13,13 +13,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/pina/:path*",
-        destination: `${backend}/api/pina/:path*`,
+        destination: `${backend}/pina/:path*`,
       },
-      // Alias adicional: algunas configuraciones antiguas usan '/pina' sin el prefijo '/api'.
-      // Este rewrite asegura compatibilidad y evita 404 como 'Cannot GET /pina/...'.
+      // Alias adicional: compatibilidad para rutas que usen '/pina' directamente.
       {
         source: "/pina/:path*",
-        destination: `${backend}/api/pina/:path*`,
+        destination: `${backend}/pina/:path*`,
       },
     ];
   },
