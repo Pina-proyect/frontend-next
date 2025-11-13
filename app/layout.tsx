@@ -1,13 +1,26 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "@/app/globals.css"; // Importar estilos globales desde src/app
+import { Toaster } from "@/components/ui/toaster"; // Importar el Toaster
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Proyecto Pina",
+  description: "Plataforma de Creadoras",
+};
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Root layout requerido por Next.js App Router.
-  // Debe incluir etiquetas <html> y <body>.
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body className={inter.className}>
+        {children}
+        <Toaster /> {/* Añadir el Toaster al final del body */}
+      </body>
     </html>
   );
 }

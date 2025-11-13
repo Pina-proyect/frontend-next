@@ -121,19 +121,13 @@ export default function RegisterPage() {
         "/registro/creadora",
         {
           method: "POST",
-          // Adaptación de claves al DTO real del backend (CreateCreatorDto):
-          // fullName, email, nationalId, birthDate, photoPath, selfiePath, password?
-          // Como omitimos el flujo KYC en esta versión, enviamos placeholders
-          // seguros para nacionalId/selfie/photo y dejamos que el backend
-          // marque el estado como 'pending'.
+          // ENVIAR ÚNICAMENTE LOS CAMPOS DEL FORMULARIO.
+          // El backend ya no espera KYC en este paso (Fase 1B).
           body: JSON.stringify({
             fullName: payload.fullName,
             email: payload.email,
             password: payload.password,
             birthDate: payload.birthDate, // YYYY-MM-DD
-            nationalId: "PENDING-KYC", // placeholder; en producción se solicitará en paso KYC
-            photoPath: "gcs://pending/photo", // placeholder; será URL de GCS/S3
-            selfiePath: "gcs://pending/selfie", // placeholder; será URL de GCS/S3
           }),
         }
       );
