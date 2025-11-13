@@ -7,27 +7,41 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-// Rutas protegidas (puedes extender esta lista cuando agregues más secciones privadas)
-const PROTECTED_MATCHERS = ["/dashboard"];
+// Middleware de Seguridad
+// Ahora protegemos TODAS las rutas no públicas (grupo (app) y cualquier otra privada),
+// dejando explícitamente accesibles las rutas públicas.
 
+// 1) Definimos las rutas públicas explícitas
+const PUBLIC_MATCHERS = [
+  "/",
+  "/login",
+  "/register",
+  "/auth/callback",
+  "/api/pina/auth/google", // Inicio de OAuth debe ser público
+  // Futuro: perfiles públicos, ej. '/[username]' → requerirá lógica de matching
+];
+
+// 2) Lógica: permitir públicas; proteger el resto
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ¿La ruta actual está en la lista de protegidas?
-  const isProtected = PROTECTED_MATCHERS.some((prefix) => pathname.startsWith(prefix));
-  if (!isProtected) return NextResponse.next();
+  // ¿La ruta actual es pública? Igualdad exacta por ahora.
+  const isPublic = PUBLIC_MATCHERS.some((prefix) => pathname === prefix);
+  if (isPublic) {
+    return NextResponse.next();
+  }
 
-  // Revisamos cookies típicas de sesión (nombres comunes).
-  // NOTA: El backend Nest debería establecer `refreshToken` como HttpOnly.
+  // 3) Protección: verificamos cookies típicas de sesión
+  // Nota: el backend Nest debe establecer 'refreshToken' como HttpOnly.
   const hasRefresh = req.cookies.has("refreshToken") || req.cookies.has("refresh_token");
   const hasAccess = req.cookies.has("accessToken");
 
   if (hasRefresh || hasAccess) {
-    // Hay señal de sesión → permitir acceso.
+    // Hay sesión → permitir acceso a rutas privadas
     return NextResponse.next();
   }
 
-  // Sin cookies de sesión → redirigir a login con el `next` para volver luego.
+  // No hay sesión → redirigir a login con next para volver post-login
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = "/login";
   loginUrl.searchParams.set("error", "auth_required");
@@ -35,7 +49,9 @@ export function middleware(req: NextRequest) {
   return NextResponse.redirect(loginUrl);
 }
 
-// Matcher para aplicar el middleware únicamente en rutas protegidas.
+// 4) Configuración del matcher: aplica a todas las rutas salvo estáticos e imágenes
 export const config = {
-  matcher: ["/dashboard", "/dashboard/:path*"],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };

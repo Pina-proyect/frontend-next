@@ -68,6 +68,20 @@ export default async function DiagnosticsPage() {
         </p>
       </section>
 
+      {/* Demostración visual de colores de éxito expuestos por Tailwind */}
+      <section className="rounded-xl border p-4">
+        <h2 className="text-lg font-medium">Success Demo</h2>
+        <div className="mt-2 rounded-md bg-success text-success-foreground p-4 ring-1 ring-border">
+          <p className="text-sm">Operación exitosa — este bloque usa colores de éxito.</p>
+          <button className="mt-3 inline-flex items-center rounded-md bg-foreground/10 px-3 py-1 text-xs hover:bg-foreground/20">
+            Acción
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Utilidades disponibles: <code>bg-success</code>, <code>text-success-foreground</code>, <code>border-border</code>, <code>ring-border</code>.
+        </p>
+      </section>
+
       <section className="rounded-xl border p-4">
         <h2 className="text-lg font-medium">Orientación</h2>
         <ul className="mt-2 text-sm list-disc list-inside">

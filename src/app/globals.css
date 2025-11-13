@@ -44,41 +44,61 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Radio de borde global (coincide con diseño de marca) */
+  --radius: 0.5rem;
+
+  /* Paleta de Colores PINA (Light Mode) - valores HSL numéricos para Shadcn */
+  --background: 270 60% 98%; /* #F8F5FA - Fondo principal */
+  --foreground: 0 0% 17%;   /* #2C2C2C - Texto principal (Secondary como foreground) */
+
+  --card: 0 0% 100%;            /* #FFFFFF - Tarjetas, popovers */
+  --card-foreground: 0 0% 17%;  /* #2C2C2C - Texto en tarjetas */
+
+  --popover: 0 0% 100%;             /* #FFFFFF */
+  --popover-foreground: 0 0% 17%;   /* #2C2C2C */
+
+  --primary: 232 33% 55%;           /* #5C6BC0 - Botones primarios, acentos */
+  --primary-foreground: 0 0% 100%;  /* Blanco para contraste */
+
+  --secondary: 0 0% 17%;            /* #2C2C2C - Botones secundarios, texto oscuro */
+  --secondary-foreground: 0 0% 98%; /* Texto claro sobre secundario */
+
+  --muted: 270 60% 90%;             /* Fondo sutil para elementos muted */
+  --muted-foreground: 232 33% 40%;  /* Primario más oscuro para texto muted */
+
+  --accent: 270 60% 94%;            /* Tono sutil de acento */
+  --accent-foreground: 232 33% 55%; /* Primario como foreground de acento */
+
+  --destructive: 4 90% 58%;         /* #F44336 - Errores/alertas */
+  --destructive-foreground: 0 0% 100%; /* Blanco para contraste */
+
+  --success: 140 55% 70%;           /* #A2E4B8 - Éxito/validaciones */
+  --success-foreground: 0 0% 10%;   /* Texto oscuro para contraste */
+
+  --border: 270 60% 85%;            /* Borde sutil basado en fondo */
+  --input: 270 60% 80%;             /* Borde de input */
+  --ring: 232 33% 55%;              /* Primario para focus ring */
+
+  /* Variables adicionales existentes (mantener por compatibilidad visual)
+     Si deseas un rebranding completo de charts/sidebar, podemos ajustarlas luego. */
+  --chart-1: 210 100% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 250 60% 45%;
+  --chart-4: 50 90% 60%;
+  --chart-5: 30 90% 55%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 0 0% 17%;
+  --sidebar-primary: 232 33% 55%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 270 60% 94%;
+  --sidebar-accent-foreground: 232 33% 55%;
+  --sidebar-border: 270 60% 85%;
+  --sidebar-ring: 232 33% 55%;
 }
 
 .dark {
+  /* Mantener paleta oscura por defecto de Shadcn/actual. Se puede
+     personalizar más adelante según branding dark mode. */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -119,4 +139,12 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Mapeo adicional para colores de éxito (success) en Tailwind v4
+   Esto permite usar clases como bg-success y text-success-foreground
+   si tu configuración de Tailwind lo expone desde @theme inline. */
+@theme inline {
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
 }

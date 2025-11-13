@@ -12,6 +12,9 @@ import {
 
 // Usar ruta relativa por defecto para aprovechar rewrites y cookies HttpOnly
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
+// Bandera opcional para desactivar llamadas de refresh en desarrollo
+// cuando el backend Nest no está corriendo.
+const DISABLE_REFRESH = process.env.NEXT_PUBLIC_DISABLE_REFRESH === "true";
 
 type HttpOptions = RequestInit & {
   isRetry?: boolean;
@@ -74,6 +77,10 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
 
 async function handleRefreshToken(): Promise<{ accessToken: string } | null> {
   const refreshToken = getRefreshToken();
+  // Si está deshabilitado y no tenemos refreshToken explícito, no llamamos al backend
+  if (DISABLE_REFRESH && !refreshToken) {
+    return null;
+  }
   try {
     // Si hay refreshToken en el store, lo enviamos en el body.
     // Si no, intentamos refresh basado en cookie HttpOnly con credentials: 'include'.

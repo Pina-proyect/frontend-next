@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import LoginPage from '../app/(auth)/login/page'
+import LoginPage from '../app/(public)/login/page'
 
 // Mock de http-client
 vi.mock('@/lib/http-client', () => ({

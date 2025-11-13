@@ -17,6 +17,9 @@ import {
 // Usar ruta relativa por defecto para aprovechar rewrites y cookies HttpOnly
 // NEXT_PUBLIC_API_URL puede apuntar a '/api/pina' en desarrollo.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
+// Bandera opcional para desactivar el refresh automático en desarrollo cuando
+// no hay backend disponible. Útil para evitar errores tipo net::ERR_ABORTED.
+const DISABLE_REFRESH = process.env.NEXT_PUBLIC_DISABLE_REFRESH === "true";
 
 // Opciones extendidas para evitar bucles de reintento
 type HttpOptions = RequestInit & {
@@ -85,6 +88,11 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
 // Lógica para refrescar el token: usa refreshToken del store y actualiza sesión
 async function handleRefreshToken(): Promise<{ accessToken: string } | null> {
   const refreshToken = getRefreshToken();
+  // Si no tenemos refreshToken y está deshabilitado el refresh por cookie,
+  // salimos temprano para evitar llamar al backend inexistente.
+  if (DISABLE_REFRESH && !refreshToken) {
+    return null;
+  }
   try {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",

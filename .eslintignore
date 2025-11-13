@@ -1,0 +1,11 @@
+# Ignorar proyectos fuera del paquete Next para evitar ruido en el workspace
+../app/**
+../frontend-merge/**
+../pinafrontend/**
+
+# Ignorar archivos generados y cache
+.next/**
+out/**
+build/**
+next-env.d.ts
+coverage/**

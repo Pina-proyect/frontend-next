@@ -11,6 +11,8 @@ function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  // Bandera para evitar intentar refresh por cookie si el backend no está corriendo
+  const disableCookieRefresh = process.env.NEXT_PUBLIC_DISABLE_REFRESH === "true";
 
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
@@ -41,6 +43,16 @@ function AuthCallbackContent() {
     };
 
     const tryCookieRefresh = async () => {
+      // Si el refresh está deshabilitado por configuración, redirigimos a login
+      if (disableCookieRefresh) {
+        toast({
+          variant: "destructive",
+          title: "Sesión no disponible",
+          description: "Backend no disponible. Inicia sesión cuando esté activo.",
+        });
+        router.push("/login");
+        return;
+      }
       try {
         // Intento de refresh usando cookie HttpOnly del backend
         // Nota: usamos ruta relativa para aprovechar los rewrites y el mismo origen,
