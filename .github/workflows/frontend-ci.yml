@@ -44,7 +44,13 @@ jobs:
         run: yarn lint
 
       - name: Run unit tests
-        run: yarn vitest run
+        run: yarn vitest run --coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-coverage
+          path: coverage
 
       - name: Build
         run: yarn build
