@@ -6,9 +6,8 @@ on:
   pull_request:
     branches: ["main", "master"]
 
-defaults:
-  run:
-    working-directory: ./pina-frontend-next
+  # Nota: evitamos defaults de working-directory para no afectar acciones (uses: ...).
+  # En su lugar declaramos working-directory por cada paso que ejecuta comandos.
 
 jobs:
   test-and-build:
@@ -25,6 +24,7 @@ jobs:
 
       - name: Enable Corepack (Yarn Berry)
         run: corepack enable
+        working-directory: ./pina-frontend-next
 
       - name: Cache Yarn and build artifacts
         uses: actions/cache@v4
@@ -39,26 +39,32 @@ jobs:
 
       - name: Install dependencies (immutable)
         run: yarn install --immutable
+        working-directory: ./pina-frontend-next
 
       - name: Lint
         run: yarn lint
+        working-directory: ./pina-frontend-next
 
       - name: Run unit tests
         run: yarn vitest run --coverage
+        working-directory: ./pina-frontend-next
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: vitest-coverage
-          path: coverage
+          path: pina-frontend-next/coverage
 
       - name: Build
         run: yarn build
+        working-directory: ./pina-frontend-next
 
       - name: Install Playwright browsers
         run: yarn dlx playwright install --with-deps
+        working-directory: ./pina-frontend-next
 
       - name: Run E2E tests (Playwright)
         run: |
           # Ejecuta E2E con servidor Next y espera hasta que esté listo
           yarn ci:e2e
+        working-directory: ./pina-frontend-next
