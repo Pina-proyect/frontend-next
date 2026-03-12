@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "coverage/**",
     // Ignorar proyectos legacy fuera de este paquete para evitar ruido en el workspace
     "../app/**",
     "../frontend-merge/**",

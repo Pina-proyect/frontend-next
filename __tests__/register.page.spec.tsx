@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, type Mock } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import RegisterPage from '../app/(public)/register/page'
+import RegisterPage from '@/app/(public)/register/page'
 
 // Mock de http-client para interceptar la llamada
 vi.mock('@/lib/http-client', () => ({
@@ -14,28 +14,29 @@ vi.mock('@/components/ui/use-toast', () => ({
 
 describe('RegisterPage', () => {
   it('renderiza campos y envía solo payload sin KYC', async () => {
-    const { http } = await import('@/lib/http-client') as any
+    const httpModule = await import('@/lib/http-client')
+    const http = httpModule.http as unknown as Mock
 
     render(<RegisterPage />)
 
     // Campos visibles
-    expect(screen.getByLabelText(/Email/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Nombre completo/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Contraseña/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Fecha de nacimiento/i)).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/Email/i)[0]).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/Nombre completo/i)[0]).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/Contraseña/i)[0]).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/Fecha de nacimiento/i)[0]).toBeInTheDocument()
 
     // Completar formulario
-    fireEvent.input(screen.getByLabelText(/Email/i), { target: { value: 'user@example.com' } })
-    fireEvent.input(screen.getByLabelText(/Nombre completo/i), { target: { value: 'User Test' } })
-    fireEvent.input(screen.getByLabelText(/Contraseña/i), { target: { value: 'Password123' } })
-    fireEvent.input(screen.getByLabelText(/Fecha de nacimiento/i), { target: { value: '1990-01-01' } })
+    fireEvent.input(screen.getAllByLabelText(/Email/i)[0], { target: { value: 'user@example.com' } })
+    fireEvent.input(screen.getAllByLabelText(/Nombre completo/i)[0], { target: { value: 'User Test' } })
+    fireEvent.input(screen.getAllByLabelText(/Contraseña/i)[0], { target: { value: 'Password123' } })
+    fireEvent.input(screen.getAllByLabelText(/Fecha de nacimiento/i)[0], { target: { value: '1990-01-01' } })
 
     // Enviar
     fireEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
 
     // Assert: llamada http con body sin campos KYC (asincrónico)
     await waitFor(() => expect(http).toHaveBeenCalled())
-    const args = (http as any).mock.calls[0]
+    const args = http.mock.calls[0]
     expect(args[0]).toBe('/registro/creadora')
     const init = args[1]
     const parsedBody = JSON.parse(init.body)

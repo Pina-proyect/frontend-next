@@ -18,8 +18,6 @@ export default function DashboardPage() {
   const storedAccess = useAuthStore((s) => s.accessToken);
   const storedRefresh = useAuthStore((s) => s.refreshToken);
 
-  // Efecto inicial: intenta verificar la sesión llamando a `/auth/me`.
-  // Si hay tokens en el store, se sincronizan con el perfil recibido.
   useEffect(() => {
     let mounted = true;
     const verify = async () => {
@@ -31,8 +29,8 @@ export default function DashboardPage() {
           setAuthSession({ accessToken: storedAccess, refreshToken: storedRefresh, user: me });
         }
         toast({ title: "Sesión verificada", description: "Perfil cargado correctamente" });
-      } catch (error: any) {
-        console.error("Verificación de sesión fallida:", error);
+      } catch (error: unknown) {
+        console.error("Verificación de sesión fallida:", error instanceof Error ? error.message : error);
         toast({ variant: "destructive", title: "Sesión inválida", description: "Inicia sesión nuevamente" });
         router.replace("/login?error=auth_failed");
       } finally {
@@ -40,21 +38,16 @@ export default function DashboardPage() {
       }
     };
     verify();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Acción de logout: limpia estado local (Zustand) y redirige a /login.
   const handleLogout = () => {
     clearAuthSession();
     toast({ title: "Sesión cerrada", description: "Has salido correctamente" });
     router.replace("/login");
   };
 
-  // Acción de refresh manual: solicita nuevos tokens usando cookie HttpOnly
-  // y actualiza el estado con `setAuthSession`.
   const handleRefresh = async () => {
     try {
       const api = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
@@ -64,7 +57,7 @@ export default function DashboardPage() {
       setAuthSession(data);
       setProfile(data.user);
       toast({ title: "Sesión actualizada", description: "Tokens y perfil renovados" });
-    } catch (error) {
+    } catch {
       toast({ variant: "destructive", title: "No se pudo refrescar", description: "Inicia sesión nuevamente" });
       router.replace("/login?error=auth_failed");
     }

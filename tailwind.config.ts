@@ -9,8 +9,8 @@ const config: Config = {
   // Modo oscuro por clase, coherente con `.dark` usado en el proyecto
   darkMode: ["class", ".dark"],
 
-  // En Tailwind v4, `content` ya no es necesario; se mantiene vacío por DX.
-  // content: [],
+  // Escaneo de contenido para Next.js en src
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
 
   theme: {
     container: {

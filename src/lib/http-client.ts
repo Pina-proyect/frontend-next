@@ -39,7 +39,12 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  const isRelativeBase = API_BASE_URL.startsWith("/");
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: options.credentials ?? (isRelativeBase ? "include" : undefined),
+  });
 
   if (!response.ok) {
     // 401: token expirado → intentamos refresh una sola vez
@@ -96,7 +101,7 @@ async function handleRefreshToken(): Promise<{ accessToken: string } | null> {
     const data: RefreshResponse = await response.json();
     setAuthSession(data);
     return { accessToken: data.accessToken };
-  } catch (e) {
+  } catch {
     return null;
   }
 }

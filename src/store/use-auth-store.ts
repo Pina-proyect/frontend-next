@@ -6,7 +6,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 // 1) Definición del modelo de usuario (alineado con backend Nest/Auth)
 export interface User {
@@ -15,6 +15,8 @@ export interface User {
   fullName: string;
   provider: string;
   tokenVersion: number;
+  slug: string | null;
+  bio: string | null;
 }
 
 interface AuthState {
@@ -28,7 +30,7 @@ interface AuthState {
 // 2) Store base con persistencia en localStorage
 const useAuthStoreBase = create<AuthState>()(
   persist(
-    (set: any) => ({
+    (set) => ({
       accessToken: undefined as string | undefined,
       refreshToken: undefined as string | undefined,
       user: null as User | null,
@@ -53,7 +55,8 @@ export const useAuthStore = <T,>(selector: (state: AuthState) => T): T => {
   const [hydrated, setHydrated] = useState(false);
   const state = useAuthStoreBase(selector);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHydrated(true);
   }, []);
 
