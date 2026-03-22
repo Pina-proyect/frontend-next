@@ -27,17 +27,18 @@ async function getCreatorProfile(slug: string): Promise<CreatorProfile | null> {
 }
 
 interface PageProps {
-  params: {
-    slug: string;
-  };
-}
+  params: Promise<{ slug: string }>;
+} 
 
 export default async function CreatorProfilePage({ params }: PageProps) {
-  const { slug } = params;
-  const profile = await getCreatorProfile(slug);
+  const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);  
+  const profile = await getCreatorProfile(decodedSlug);
+  
+  
 
   if (!profile) {
-    notFound();
+    return <div>Usuario no encontrado</div>;
   }
 
   const initials = profile.fullName
@@ -152,8 +153,9 @@ export default async function CreatorProfilePage({ params }: PageProps) {
 
 // Metadata dinámica para SEO
 export async function generateMetadata({ params }: PageProps) {
-  const { slug } = params;
-  const profile = await getCreatorProfile(slug);
+  const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
+  const profile = await getCreatorProfile(decodedSlug);
 
   if (!profile) {
     return {

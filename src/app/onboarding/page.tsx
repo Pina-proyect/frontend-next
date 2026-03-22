@@ -29,7 +29,7 @@ const formSchema = z.object({
     .min(3, "El slug debe tener al menos 3 caracteres")
     .max(30, "El slug no puede exceder 30 caracteres")
     .regex(/^[a-zA-Z0-9-]+$/, "El slug solo puede contener letras, números y guiones")
-    .transform((val) => val.toLowerCase()),
+    .transform((val) => val.toLowerCase().trim().replace(/\s+/g, "-")),
   bio: z
     .string()
     .max(255, "La biografía no puede exceder 255 caracteres")

@@ -27,9 +27,14 @@ interface RefreshResponse {
 }
 
 export async function http<T>(path: string, options: HttpOptions = {}): Promise<T> {
-  const token = getAuthToken();
+  let token = null;
+  if (typeof window !== "undefined") {
+    token = getAuthToken();
+  }
   const headers = new Headers(options.headers);
-
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
   // Solo establecemos JSON si no es FormData
   if (!(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
@@ -58,7 +63,7 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
       // Refresh falló: limpiamos sesión y redirigimos a login
       clearAuthSession();
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        token = getAuthToken();
       }
       throw new Error("Sesión expirada");
     }
