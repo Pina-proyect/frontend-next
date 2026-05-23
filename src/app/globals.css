@@ -4,133 +4,97 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
+  /* Paleta "Empowered Elegance" - The Digital Atelier */
+  --color-surface-dim: #dcd9de;
+  --color-inverse-on-surface: #f3f0f5;
+  --color-background: #fbf8fd;
+  --color-on-primary-fixed: #00105b;
+  --color-on-primary-fixed-variant: #2f3f92;
+  --color-surface-container-high: #eae7ec;
+  --color-on-secondary-container: #636262;
+  --color-on-primary: #ffffff;
+  --color-secondary-container: #e2dfde;
+  --color-on-surface: #1b1b1f;
+  --color-secondary: #5f5e5e;
+  --color-on-error: #ffffff;
+  --color-on-tertiary: #ffffff;
+  --color-primary-fixed: #dee0ff;
+  --color-surface: #fbf8fd;
+  --color-on-tertiary-fixed-variant: #5f4100;
+  --color-on-secondary: #ffffff;
+  --color-on-tertiary-container: #fff6ee;
+  --color-error-container: #ffdad6;
+  --color-surface-container-highest: #e4e1e6;
+  --color-error: #ba1a1a;
+  --color-surface-variant: #e4e1e6;
+  --color-on-tertiary-fixed: #281900;
+  --color-on-error-container: #93000a;
+  --color-surface-bright: #fbf8fd;
+  --color-on-secondary-fixed: #1c1b1b;
+  --color-primary-fixed-dim: #bac3ff;
+  --color-tertiary: #775200;
+  --color-secondary-fixed: #e5e2e1;
+  --color-surface-container-low: #f5f2f7;
+  --color-surface-tint: #4858ab;
+  --color-tertiary-container: #976900;
+  --color-primary-container: #5c6bc0;
+  --color-tertiary-fixed: #ffdeac;
+  --color-inverse-surface: #303034;
+  --color-on-surface-variant: #454651;
+  --color-tertiary-fixed-dim: #f6bd58;
+  --color-on-secondary-fixed-variant: #474746;
+  --color-primary: #4352a5;
+  --color-outline: #767683;
+  --color-outline-variant: #c6c5d3;
+  --color-inverse-primary: #bac3ff;
+  --color-surface-container: #f0edf2;
+  --color-on-background: #1b1b1f;
+  --color-surface-container-lowest: #ffffff;
+  --color-secondary-fixed-dim: #c8c6c5;
+  --color-on-primary-container: #f8f6ff;
+  
+  /* Fallbacks Shadcn */
+  --color-foreground: var(--color-on-surface);
+  --color-muted: var(--color-surface-container-high);
+  --color-muted-foreground: var(--color-on-surface-variant);
+  --color-accent: var(--color-secondary-container);
+  --color-accent-foreground: var(--color-on-secondary-container);
+  --color-destructive: var(--color-error);
+  --color-destructive-foreground: var(--color-on-error);
+  --color-border: var(--color-outline-variant);
+  --color-input: var(--color-surface-container-highest);
+  --color-ring: var(--color-primary);
 
-:root {
-  /* Radio de borde global (coincide con diseño de marca) */
-  --radius: 0.5rem;
+  /* Fonts */
+  --font-headline: var(--font-manrope);
+  --font-body: var(--font-inter);
+  --font-label: var(--font-inter);
+  --font-sans: var(--font-inter);
 
-  /* Paleta de Colores PINA (Light Mode) - valores HSL numéricos para Shadcn */
-  --background: 270 60% 98%; /* #F8F5FA - Fondo principal */
-  --foreground: 0 0% 17%;   /* #2C2C2C - Texto principal (Secondary como foreground) */
-
-  --card: 0 0% 100%;            /* #FFFFFF - Tarjetas, popovers */
-  --card-foreground: 0 0% 17%;  /* #2C2C2C - Texto en tarjetas */
-
-  --popover: 0 0% 100%;             /* #FFFFFF */
-  --popover-foreground: 0 0% 17%;   /* #2C2C2C */
-
-  --primary: 232 33% 55%;           /* #5C6BC0 - Botones primarios, acentos */
-  --primary-foreground: 0 0% 100%;  /* Blanco para contraste */
-
-  --secondary: 0 0% 17%;            /* #2C2C2C - Botones secundarios, texto oscuro */
-  --secondary-foreground: 0 0% 98%; /* Texto claro sobre secundario */
-
-  --muted: 270 60% 90%;             /* Fondo sutil para elementos muted */
-  --muted-foreground: 232 33% 40%;  /* Primario más oscuro para texto muted */
-
-  --accent: 270 60% 94%;            /* Tono sutil de acento */
-  --accent-foreground: 232 33% 55%; /* Primario como foreground de acento */
-
-  --destructive: 4 90% 58%;         /* #F44336 - Errores/alertas */
-  --destructive-foreground: 0 0% 100%; /* Blanco para contraste */
-
-  --success: 140 55% 70%;           /* #A2E4B8 - Éxito/validaciones */
-  --success-foreground: 0 0% 10%;   /* Texto oscuro para contraste */
-
-  --border: 270 60% 85%;            /* Borde sutil basado en fondo */
-  --input: 270 60% 80%;             /* Borde de input */
-  --ring: 232 33% 55%;              /* Primario para focus ring */
-
-  /* Variables adicionales existentes (mantener por compatibilidad visual)
-     Si deseas un rebranding completo de charts/sidebar, podemos ajustarlas luego. */
-  --chart-1: 210 100% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 250 60% 45%;
-  --chart-4: 50 90% 60%;
-  --chart-5: 30 90% 55%;
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 0 0% 17%;
-  --sidebar-primary: 232 33% 55%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 270 60% 94%;
-  --sidebar-accent-foreground: 232 33% 55%;
-  --sidebar-border: 270 60% 85%;
-  --sidebar-ring: 232 33% 55%;
-}
-
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius: 0.75rem;
 }
 
 @layer base {
+  /* Reset: quitamos borders por defecto para adaptarnos a The No-Line Rule */
   * {
     @apply border-border outline-ring/50;
+    border-color: transparent;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-surface text-on-surface font-body;
   }
 }
 
-/* Mapeo adicional para colores de éxito (success) en Tailwind v4
-   Esto permite usar clases como bg-success y text-success-foreground
-   si tu configuración de Tailwind lo expone desde @theme inline. */
-@theme inline {
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
+/* Glassmorphism Utilidades (Empowered Elegance) */
+@layer utilities {
+  .glass-panel {
+    background: rgba(251, 248, 253, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
 }

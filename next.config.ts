@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
         source: "/pina/:path*",
         destination: `${backend}/pina/:path*`,
       },
+      {
+        source: "/uploads/:path*",
+        destination: `${backend}/uploads/:path*`,
+      },
     ];
   },
 };
