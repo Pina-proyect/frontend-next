@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster"; // Importar el Toaster para notificaciones
+import { Toaster } from "@/components/ui/toaster";
 
-// Configuración de la tipografía Inter
-const inter = Inter({ subsets: ["latin"] });
+// Configuración de tipografías
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: 'swap' });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: 'swap' });
 
-// Metadatos del proyecto
 export const metadata: Metadata = {
-  title: "Proyecto Pina",
+  title: "Pina - El Estudio Digital",
   description: "Plataforma de Creadoras",
 };
 
@@ -18,10 +18,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" className="light" suppressHydrationWarning>
+      <body 
+        className={`${inter.variable} ${manrope.variable} font-body bg-surface text-on-surface selection:bg-primary-fixed antialiased`}
+        suppressHydrationWarning
+      >
         {children}
-        <Toaster /> {/* Añadir el Toaster aquí para notificaciones */}
+        <Toaster />
       </body>
     </html>
   );
