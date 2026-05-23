@@ -17,6 +17,11 @@ export interface User {
   tokenVersion: number;
   slug: string | null;
   bio: string | null;
+  role: "CREATOR" | "CONSUMER";
+  mpAccessToken?: string | null;
+  pinaPrice?: number | null;
+  donationGoalTitle?: string | null;
+  donationGoalAmount?: number | null;
 }
 
 interface AuthState {
