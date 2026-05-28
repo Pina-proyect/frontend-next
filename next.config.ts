@@ -13,12 +13,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/pina/:path*",
-        destination: `${backend}/pina/:path*`,
+        destination: `${backend}/api/pina/:path*`,
       },
       // Alias adicional: compatibilidad para rutas que usen '/pina' directamente.
       {
         source: "/pina/:path*",
-        destination: `${backend}/pina/:path*`,
+        destination: `${backend}/api/pina/:path*`,
       },
       {
         source: "/uploads/:path*",

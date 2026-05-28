@@ -42,7 +42,7 @@ const formSchema = z.object({
     const realAge = hasBirthdayPassed ? age : age - 1;
     return realAge >= 18;
   }, { message: "Debes ser mayor de 18 años" }),
-  role: z.enum(["CREATOR", "CONSUMER"]).default("CONSUMER"),
+  role: z.enum(["CREATOR", "CONSUMER"]),
 });
 
 interface KycResponse {
