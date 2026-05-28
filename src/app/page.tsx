@@ -1,27 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { PublicHeader } from "@/components/public-header";
 
 export default function Home() {
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-surface/70 dark:bg-slate-950/70 backdrop-blur-xl shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)]">
-        <div className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto font-headline tracking-tight">
-          <div className="text-2xl font-bold tracking-tighter text-on-surface dark:text-white">Pina</div>
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="#" className="text-primary font-semibold border-b-2 border-primary transition-colors duration-300">Descubrir</Link>
-            <Link href="#" className="text-on-surface/60 dark:text-white/60 hover:text-primary transition-colors duration-300">Creadores</Link>
-            <Link href="#" className="text-on-surface/60 dark:text-white/60 hover:text-primary transition-colors duration-300">Tendencias</Link>
-            <Link href="#" className="text-on-surface/60 dark:text-white/60 hover:text-primary transition-colors duration-300">Precios</Link>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link href="/login">
-              <button className="bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-lg text-sm font-semibold scale-95 hover:scale-100 active:scale-90 transition-transform shadow-md">
-                Entrar al Estudio
-              </button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicHeader />
 
       <main className="pt-24 min-h-screen">
         {/* Hero Section */}
@@ -40,7 +24,7 @@ export default function Home() {
                     Empezar Ahora
                   </button>
                 </Link>
-                <Link href="/login">
+                <Link href="/explore">
                   <button className="glass-panel border border-outline-variant/20 text-primary px-8 py-4 rounded-xl font-semibold hover:bg-surface-container-low transition-all">
                     Ver Galería
                   </button>

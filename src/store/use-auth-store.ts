@@ -22,6 +22,14 @@ export interface User {
   pinaPrice?: number | null;
   donationGoalTitle?: string | null;
   donationGoalAmount?: number | null;
+  mpPublicKey?: string | null;
+  gender?: string;
+  niche?: string | null;
+  instagram?: boolean;
+  tiktok?: boolean;
+  youtube?: boolean;
+  phone?: string | null;
+  verificationStatus?: string;
 }
 
 interface AuthState {

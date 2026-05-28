@@ -2,10 +2,22 @@ import { http } from "@/lib/http-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Metadata } from "next";
+import DonationBox from "./donation-box";
+
+const getGenderedNiche = (gender: string, niche: string | null) => {
+  const prefix = gender === "creador" ? "Creador" : "Creadora";
+  if (!niche) return `${prefix} Digital`;
+  switch (niche) {
+    case "photography": return `${prefix} de Fotografía`;
+    case "film": return `${prefix} de Cine y Video`;
+    case "digital-art": return `${prefix} de Arte Digital`;
+    default: return `${prefix} ${niche}`;
+  }
+};
 
 async function getCreatorProfile(slug: string): Promise<any | null> {
-  const backend = (process.env.BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
-  const url = `${backend}/pina/users/profile/${slug}`;
+  const backend = (process.env.BACKEND_URL || "http://localhost:4011").replace(/\/$/, "");
+  const url = `${backend}/api/pina/users/profile/${slug}`;
   
   try {
     const res = await fetch(url, { next: { revalidate: 60 } });
@@ -18,8 +30,8 @@ async function getCreatorProfile(slug: string): Promise<any | null> {
 }
 
 async function getCreatorPacks(slug: string): Promise<any[]> {
-  const backend = (process.env.BACKEND_URL || "http://localhost:4000").replace(/\/$/, "");
-  const url = `${backend}/pina/packs/public/${slug}`;
+  const backend = (process.env.BACKEND_URL || "http://localhost:4011").replace(/\/$/, "");
+  const url = `${backend}/api/pina/packs/public/${slug}`;
   
   try {
     const res = await fetch(url, { next: { revalidate: 60 } });
@@ -56,7 +68,7 @@ export default async function CreatorProfilePage({ params }: PageProps) {
 
   const initials = profile.fullName
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -111,7 +123,7 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                         {profile.fullName}
                     </h1>
                     <span className="text-primary font-headline font-bold text-lg md:mb-1 uppercase tracking-widest opacity-80">
-                        {profile.niche || "Creadora Digital"}
+                        {getGenderedNiche(profile.gender || "creadora", profile.niche)}
                     </span>
                 </div>
                 <p className="text-on-surface-variant text-lg font-medium">@{profile.slug}</p>
@@ -196,23 +208,12 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                     </div>
                 </div>
 
-                {/* Engagement Mock Card */}
-                <div className="bg-primary-container/10 border border-primary/10 rounded-3xl p-8">
-                     <div className="flex justify-between items-center mb-4">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Estadísticas</span>
-                        <span className="material-symbols-outlined text-primary text-xl">bar_chart</span>
-                     </div>
-                     <div className="space-y-4">
-                        <div>
-                            <p className="text-2xl font-headline font-extrabold text-on-surface tracking-tighter">12.4k</p>
-                            <p className="text-xs text-on-surface-variant font-medium">Lectores mensuales</p>
-                        </div>
-                        <div>
-                            <p className="text-2xl font-headline font-extrabold text-on-surface tracking-tighter">98%</p>
-                            <p className="text-xs text-on-surface-variant font-medium">Satisfacción del Estudio</p>
-                        </div>
-                     </div>
-                </div>
+                {/* Caja de Donaciones con Mercado Pago */}
+                <DonationBox 
+                  creatorId={profile.id} 
+                  creatorName={profile.fullName} 
+                  pinaPrice={profile.pinaPrice || 1000} 
+                />
             </div>
         </div>
 

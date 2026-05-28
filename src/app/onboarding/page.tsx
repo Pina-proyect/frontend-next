@@ -120,25 +120,24 @@ const formSchema = z.object({
     .string()
     .min(3, "El slug debe tener al menos 3 caracteres")
     .max(30, "El slug no puede exceder 30 caracteres")
-    .regex(/^[a-zA-Z0-9-]+$/, "El slug solo puede contener letras, números y guiones")
-    .transform((val) => val.toLowerCase().trim().replace(/\s+/g, "-")),
+    .regex(/^[a-zA-Z0-9-]+$/, "El slug solo puede contener letras, números y guiones"),
   bio: z
     .string()
-    .max(160, "Máximo 160 caracteres")
-    .optional()
-    .or(z.literal("")),
+    .max(160, "Máximo 160 caracteres"),
+  gender: z.string(),
 });
 
 function Step2ProfileSetup() {
-  const { slug, bio, setProfileInfo, nextStep, prevStep } = useOnboardingStore();
+  const { slug, bio, gender, setProfileInfo, nextStep, prevStep } = useOnboardingStore();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { slug, bio },
+    defaultValues: { slug, bio, gender },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    setProfileInfo(values.slug, values.bio ?? "");
+    const formattedSlug = values.slug.toLowerCase().trim().replace(/\s+/g, "-");
+    setProfileInfo(formattedSlug, values.bio, values.gender);
     nextStep();
   };
 
@@ -173,6 +172,41 @@ function Step2ProfileSetup() {
 
             {/* Inputs */}
             <div className="space-y-6">
+               <FormField control={form.control} name="gender" render={({ field }) => (
+                 <FormItem className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">
+                        Tipo de Identificación / Rol
+                    </label>
+                    <FormControl>
+                      <div className="flex gap-4">
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("creadora")}
+                          className={`flex-1 py-4 px-6 rounded-xl font-headline font-bold text-xs uppercase tracking-wider transition-all active:scale-95 text-center ${
+                            field.value === "creadora"
+                              ? "bg-gradient-to-br from-primary to-primary-container text-white shadow-md shadow-primary/10"
+                              : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface"
+                          }`}
+                        >
+                          Creadora
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("creador")}
+                          className={`flex-1 py-4 px-6 rounded-xl font-headline font-bold text-xs uppercase tracking-wider transition-all active:scale-95 text-center ${
+                            field.value === "creador"
+                              ? "bg-gradient-to-br from-primary to-primary-container text-white shadow-md shadow-primary/10"
+                              : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface"
+                          }`}
+                        >
+                          Creador
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                 </FormItem>
+               )} />
+
                <FormField control={form.control} name="slug" render={({ field }) => (
                  <FormItem className="space-y-2">
                     <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1">
@@ -253,6 +287,7 @@ function Step3ConnectSocials() {
           slug, 
           bio, 
           niche: useOnboardingStore.getState().niche,
+          gender: useOnboardingStore.getState().gender,
           instagram: connectedSocials.instagram,
           tiktok: connectedSocials.tiktok,
           youtube: connectedSocials.youtube

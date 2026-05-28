@@ -24,6 +24,15 @@ export default function ContentPage() {
 
   useEffect(() => {
     fetchMedia();
+
+    const handleUpdate = () => {
+      fetchMedia();
+    };
+
+    window.addEventListener("content-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("content-updated", handleUpdate);
+    };
   }, []);
 
   const fetchMedia = async () => {
