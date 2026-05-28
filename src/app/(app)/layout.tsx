@@ -10,6 +10,11 @@ import { http } from "@/lib/http-client";
 function SidebarNavigation({ pathname }: { pathname: string }) {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") || "monetization";
+  const user = useAuthStore((s) => s.user);
+
+  const [profileExpanded, setProfileExpanded] = useState(() => {
+    return pathname === "/settings" && activeTab === "profile";
+  });
 
   const navLinks = [
     { name: "Panel", href: "/dashboard", icon: "grid_view" },
@@ -20,18 +25,80 @@ function SidebarNavigation({ pathname }: { pathname: string }) {
     { name: "Bóveda", href: "#", icon: "lock" },
     { name: "Suscriptores", href: "#", icon: "group" },
     { name: "Monetización", href: "/settings?tab=monetization", icon: "payments" },
-    { name: "Perfil Público", href: "/settings?tab=profile", icon: "account_circle" },
+    {
+      name: "Perfil Público",
+      icon: "account_circle",
+      subItems: [
+        { name: "Editar Ajustes", href: "/settings?tab=profile", icon: "edit" },
+        { name: "Ver Vista Pública", href: user?.slug ? `/${user.slug}` : "#", icon: "open_in_new", isExternal: true },
+      ]
+    },
     { name: "Cuenta y Seguridad", href: "/settings?tab=security", icon: "settings" },
   ];
 
   return (
     <nav className="flex flex-col gap-1 flex-grow">
       {navLinks.map((link) => {
+        if (link.subItems) {
+          return (
+            <div key={link.name} className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => setProfileExpanded(!profileExpanded)}
+                className="rounded-lg font-semibold flex items-center justify-between px-4 py-3 transition-all duration-300 text-on-surface-variant hover:text-on-surface w-full text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined">{link.icon}</span>
+                  <span className="font-headline uppercase tracking-widest text-[10px] font-bold">{link.name}</span>
+                </div>
+                <span className="material-symbols-outlined text-xs">
+                  {profileExpanded ? "expand_less" : "expand_more"}
+                </span>
+              </button>
+
+              {profileExpanded && (
+                <div className="flex flex-col gap-1 pl-6">
+                  {link.subItems.map((sub) => {
+                    const isSubActive = sub.href.includes("?tab=")
+                      ? pathname === "/settings" && sub.href.endsWith(`?tab=${activeTab}`)
+                      : pathname === sub.href;
+
+                    return (
+                      <Link
+                        key={sub.name}
+                        href={sub.href}
+                        target={sub.isExternal ? "_blank" : undefined}
+                        className={`rounded-lg font-semibold flex items-center gap-2 px-4 py-2 transition-all duration-300 ${
+                          isSubActive
+                            ? "bg-surface-container-lowest text-primary shadow-sm ring-1 ring-outline-variant/10"
+                            : "text-on-surface-variant hover:translate-x-1 hover:text-on-surface"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm" style={isSubActive ? {fontVariationSettings: "'FILL' 1"} : {}}>{sub.icon}</span>
+                        <span className="font-body text-[11px] font-semibold">{sub.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
         const isActive = link.href.includes("?tab=")
           ? pathname === "/settings" && link.href.endsWith(`?tab=${activeTab}`)
           : pathname === link.href;
+
         return (
-          <Link key={link.name} href={link.href} className={`rounded-lg font-semibold flex items-center gap-3 px-4 py-3 transition-all duration-300 ${isActive ? 'bg-surface-container-lowest text-primary shadow-sm ring-1 ring-outline-variant/10' : 'text-on-surface-variant hover:translate-x-1 hover:text-on-surface'}`}>
+          <Link
+            key={link.name}
+            href={link.href}
+            className={`rounded-lg font-semibold flex items-center gap-3 px-4 py-3 transition-all duration-300 ${
+              isActive
+                ? "bg-surface-container-lowest text-primary shadow-sm ring-1 ring-outline-variant/10"
+                : "text-on-surface-variant hover:translate-x-1 hover:text-on-surface"
+            }`}
+          >
             <span className="material-symbols-outlined" style={isActive ? {fontVariationSettings: "'FILL' 1"} : {}}>{link.icon}</span>
             <span className="font-headline uppercase tracking-widest text-[10px] font-bold">{link.name}</span>
           </Link>
@@ -77,6 +144,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     
     return () => { mounted = false; };
   }, [storedUser, router, toast]);
+
+  // Listener para abrir el modal de publicación de forma global desde el dashboard u otras páginas
+  useEffect(() => {
+    const handleOpen = () => setIsNewPostModalOpen(true);
+    window.addEventListener("open-new-post-modal", handleOpen);
+    return () => window.removeEventListener("open-new-post-modal", handleOpen);
+  }, []);
 
   const handleLogout = () => {
     clearAuthSession();
@@ -166,22 +240,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="h-8 w-[1px] bg-outline-variant/30 mx-2"></div>
               
               {/* Profile Snippet */}
-              <Link 
-                href={`/${profile?.slug}`} 
-                target="_blank"
-                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-              >
+              {/* Profile Snippet (Informativo y Estático) */}
+              <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-bold text-on-surface leading-none truncate max-w-[120px]">{profile?.fullName}</p>
-                  <p className="text-[10px] font-headline font-semibold text-primary uppercase tracking-wider mt-1 truncate max-w-[120px] flex items-center justify-end gap-1">
-                    @{profile?.slug || 'creadora'}
-                    <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+                  <p className="text-[10px] font-headline font-semibold text-on-surface-variant uppercase tracking-wider mt-1 truncate max-w-[120px]">
+                    @{profile?.slug || "creadora"}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center ring-2 ring-primary/20 text-primary uppercase font-bold overflow-hidden shadow-sm">
-                  {profile?.fullName?.charAt(0) || 'U'}
+                  {profile?.fullName?.charAt(0) || "U"}
                 </div>
-              </Link>
+              </div>
             </div>
           </div>
         </header>

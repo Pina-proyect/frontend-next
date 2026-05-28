@@ -2,160 +2,368 @@
 
 import React, { useEffect, useState } from "react";
 import { http } from "@/lib/http-client";
-import { useAuthStore, type User } from "@/store/use-auth-store";
+import { useAuthStore } from "@/store/use-auth-store";
+import { useToast } from "@/components/ui/use-toast";
+import Link from "next/link";
+
+interface Donation {
+  id: string;
+  quantity: number;
+  message: string | null;
+  donorName: string | null;
+  createdAt: string;
+}
+
+const getGenderedNiche = (gender: string, niche: string | null) => {
+  const prefix = gender === "creador" ? "Creador" : "Creadora";
+  if (!niche) return `${prefix} Digital`;
+  switch (niche) {
+    case "photography": return `${prefix} de Fotografía`;
+    case "film": return `${prefix} de Cine y Video`;
+    case "digital-art": return `${prefix} de Arte Digital`;
+    default: return `${prefix} ${niche}`;
+  }
+};
 
 export default function DashboardPage() {
-  const storedUser = useAuthStore((s) => s.user);
+  const user = useAuthStore((s) => s.user);
+  const { toast } = useToast();
   
-  // Using user data specifically for the "Hello" or stats if you want, but for now we follow the design specifically.
-  // The layout already takes care of the navbar.
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [mediaCount, setMediaCount] = useState(0);
+  const [packsCount, setPacksCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    
+    let active = true;
+    const fetchDashboardData = async () => {
+      try {
+        const [donationsData, mediaData, packsData] = await Promise.all([
+          http<Donation[]>(`/donations/public/${user.id}`).catch(() => []),
+          http<any[]>("/media/my-content").catch(() => []),
+          http<any[]>("/packs/my-packs").catch(() => [])
+        ]);
+        
+        if (active) {
+          setDonations(donationsData || []);
+          setMediaCount(mediaData?.length || 0);
+          setPacksCount(packsData?.length || 0);
+        }
+      } catch (err) {
+        console.error("Error loading dashboard data:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    
+    fetchDashboardData();
+    return () => { active = false; };
+  }, [user?.id]);
+
+  // Cálculos dinámicos
+  const totalPinas = donations.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
+  const pinaPrice = user?.pinaPrice || 1000;
+  const totalEarnings = totalPinas * pinaPrice;
+
+  const goalAmount = user?.donationGoalAmount || 0;
+  const goalTitle = user?.donationGoalTitle || "";
+  const goalProgress = goalAmount > 0 ? Math.min((totalEarnings / goalAmount) * 100, 100) : 0;
+
+  const handleOpenNewPost = () => {
+    window.dispatchEvent(new Event("open-new-post-modal"));
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 lg:p-10 max-w-screen-2xl mx-auto w-full flex h-[50vh] items-center justify-center bg-surface">
+        <div className="flex flex-col items-center gap-4">
+           <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+           <p className="text-on-surface-variant font-label text-sm animate-pulse">Cargando Panel...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 lg:p-10 max-w-screen-2xl mx-auto w-full space-y-10 animate-in fade-in duration-500">
+    <div className="p-6 lg:p-10 max-w-screen-2xl mx-auto w-full space-y-8 animate-in fade-in duration-500">
       
-      {/* Welcome Snippet (Dynamic to User) */}
-      <div className="md:hidden mb-2">
-        <h2 className="font-headline text-3xl font-extrabold tracking-tight text-on-surface">Hola, {storedUser?.fullName?.split(' ')[0] || 'Creador'}</h2>
-        <p className="text-on-surface-variant font-body">Bienvenido de nuevo a tu Estudio</p>
+      {/* Saludo de Bienvenida (Estilo Atelier) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-headline text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface">
+            ¡Hola, {user?.fullName?.split(" ")[0]}!
+          </h2>
+          <p className="text-on-surface-variant font-body mt-1 text-sm md:text-base">
+            Bienvenido al panel de control de tu Estudio como <span className="text-primary font-bold">{getGenderedNiche(user?.gender || "creadora", user?.niche || null)}</span>.
+          </p>
+        </div>
+        
+        {/* Atajo rápido para ver perfil público */}
+        {user?.slug && (
+          <Link 
+            href={`/${user.slug}`} 
+            target="_blank"
+            className="inline-flex items-center gap-2 bg-surface-container-high hover:bg-surface-container-highest text-primary font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-sm active:scale-95"
+          >
+            <span className="material-symbols-outlined text-sm">visibility</span>
+            Ver mi Estudio Público
+          </Link>
+        )}
       </div>
 
-      {/* Featured Creator Section (Bento Inspired) */}
-      <section className="relative rounded-[24px] overflow-hidden bg-surface-container-low min-h-[450px] flex items-center shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] ring-1 ring-outline-variant/10 group">
-        <div className="absolute inset-0 z-0">
-          <img alt="Featured Creator" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz9llOv80ht7G9EOH2JhAc3BHsvKfFWZPwz0z7uVSfMIztelsKkKoPudGGSnsSb0ZTLoGRUC4HKaNr949ZWVp8p5BpCu2jg0VC1tB5nYcxmSSvfHLu7wkhFcFUlI052aQepltTxA6B8ldvU-B7JAl2Tz3NWSLSmopLOPARTnsYfhkNl-zbdOOdd8LKN23ZhwkuJE01sruqWTOCvviHmDRfIZoUygHMxSJqR0zvuZbxNDWdcUoWX4btr25Ot-MffQa4jstvJ2JIuKr3"/>
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
-        </div>
-        <div className="relative z-10 px-8 lg:px-16 max-w-2xl">
-          <span className="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary-fixed border border-primary/30 font-headline text-[10px] font-bold uppercase tracking-widest mb-4 backdrop-blur-md shadow-sm">
-            Creadora del Mes
-          </span>
-          <h2 className="text-white font-headline text-5xl font-extrabold tracking-tight mb-4 drop-shadow-md">
-            Maya Sterling
-          </h2>
-          <p className="text-white/80 text-lg leading-relaxed mb-8 font-body drop-shadow">
-            Dominando el arte de la narrativa digital. Únete al círculo exclusivo de Maya para acceder a sus flujos de trabajo cinematográficos y filosofía creativa.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-gradient-to-br from-primary to-primary-container text-white px-8 py-4 rounded-xl font-headline font-bold flex items-center justify-center gap-2 hover:scale-[1.02] shadow-[0_12px_32px_-4px_rgba(67,82,165,0.3)] transition-all">
-              <span>Seguir Estudio</span>
-              <span className="material-symbols-outlined text-sm">arrow_forward</span>
-            </button>
-            <button className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-8 py-4 rounded-xl font-headline font-bold hover:bg-white/20 transition-all text-center">
-              Ver Galería
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Content Library Section */}
-      <section>
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h3 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Biblioteca de Contenido</h3>
-            <p className="text-on-surface-variant font-body mt-1 text-sm">Clases magistrales premium y packs de recursos exclusivos.</p>
-          </div>
-          <div className="flex gap-2">
-            <button className="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center text-on-surface hover:bg-surface-container-lowest ring-1 ring-outline-variant/20 transition-colors">
-              <span className="material-symbols-outlined text-xl">filter_list</span>
-            </button>
-            <button className="px-4 py-2 rounded-xl bg-surface-container-highest text-on-surface text-sm font-bold shadow-sm hover:bg-surface-container-lowest ring-1 ring-outline-variant/20 transition-colors">
-                Ver Todo
-            </button>
-          </div>
-        </div>
-
-        {/* Asymmetric Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Video Card 1 */}
-          <div className="lg:col-span-2 group relative rounded-2xl overflow-hidden aspect-video shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] ring-1 ring-outline-variant/10 cursor-pointer">
-            <img alt="Video Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWYtQQszF4ZSZxuHxF-rk4Pr80II2y1pk3BdLuJOnZR2EIXLfBxRM20OeJkQ4YRkDY9jQv0n861hYiPuOEOv6b4815_3hVc-8gK5xRac1w1BQYtJLzXR5O0_3uGIaQcpU1SpSLjCVxYTdew5J2VFn0cuU7DFvvRrUGcNLMhwmGpdXivuO0pe2p94zxQmyfKHayxnZyro6JNL33iAPl0fjEkJUL0z8eE2SW3SzDKuQcLMuu4hvSjtTU-7CokZ39nKis-ySm7Q4kwFG9"/>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:bg-black/10 transition-colors duration-500"></div>
-            
-            {/* Live Tag */}
-            <div className="absolute top-4 left-4">
-              <div className="bg-black/30 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-error animate-pulse"></span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white">Clase en Vivo</span>
-              </div>
-            </div>
-            
-            {/* Bottom Bar Info */}
-            <div className="absolute bottom-0 left-0 right-0 p-5 bg-black/40 backdrop-blur-xl border-t border-white/10 m-3 rounded-xl flex items-center justify-between">
-              <div>
-                <h4 className="text-white font-headline font-bold text-xl drop-shadow">Teoría de la Iluminación</h4>
-                <p className="text-white/60 text-xs font-semibold mt-0.5">4.2k Espectadores Activos</p>
-              </div>
-              <button className="bg-gradient-to-br from-primary to-primary-container text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-[0_12px_32px_-4px_rgba(67,82,165,0.3)] hover:scale-105 transition-transform">
-                Ver
-              </button>
+      {/* Alerta de cuenta no conectada (Mercado Pago) */}
+      {!user?.mpAccessToken && (
+        <div className="p-5 bg-gradient-to-r from-secondary/15 to-primary/10 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ring-1 ring-secondary/20 border-none">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-secondary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+            <div>
+              <p className="text-sm font-bold text-on-surface">Configura tus donaciones</p>
+              <p className="text-xs text-on-surface-variant font-medium mt-0.5">
+                Aún no has conectado tu cuenta de Mercado Pago. Los visitantes no podrán donarte piñas hasta que la enlaces.
+              </p>
             </div>
           </div>
-
-          {/* Video Card 2 */}
-          <div className="group relative rounded-2xl overflow-hidden shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] aspect-[4/5] lg:aspect-auto ring-1 ring-outline-variant/10 cursor-pointer">
-            <img alt="Assets Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAON-MSGv4XjSz0OzYIHYftxoisuvwoo0_6a9w6y6MdqpvSboI_7S0-HYPpRLdr4p_ZCKeKtk-D0FNSQMTB9l8A_StlIQ3P36JdZkY9ZstnbCYOvurXpZtm93r7LNC-ExwcQv6iog_CfH1wJ2uztebX_VsgO0XqMW7oqMOKgYpNKJvWChaqJQzpnBf_dFfnyAIzQ96V_zt8eeBC0HSz_UtHjIh-Av6fJe3GPvXLw1jDYRHXFFSCX5gBMkR94So8UQdTdF-nR9EFuku0"/>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-            <div className="absolute bottom-0 p-5 w-full">
-              <h4 className="text-white font-headline font-bold text-lg mb-1 drop-shadow">Bundle de Ajustes 04</h4>
-              <p className="text-white/70 text-xs mb-4 font-medium">24 perfiles de Lightroom en alta resolución</p>
-              <button className="w-full bg-white text-primary px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-surface-container-low transition-colors shadow-sm">
-                Desbloquear Pack
-              </button>
-            </div>
-          </div>
-
-          {/* Video Card 3 */}
-          <div className="group relative rounded-2xl overflow-hidden shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] aspect-[4/5] lg:aspect-auto ring-1 ring-outline-variant/10 cursor-pointer">
-            <img alt="Course Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6whOxas_yCKyC3fzfavMjE14IhUoGWGM4SV4i56fwuuu2s4eE5iJqVkXAAuj10aRmh_YEFdbkzJLmd7dWnEGEewTVBt6wAkBdUKdNOp1a7qNwRSCBWsz_l0jOV8j-Axjh9ySbDbcgfrNFTbL_dzxSxXhyvW0GP61x1xc2-tQo1l__V0xh8QXdp_r40k9kJDaPuO6mziCYyR2NPk-mmhvrc17XQYyzH3ITa2gOdwxKJz-1eHRqer-qEv3wfGaYKtBM5HyST0y8ANuo"/>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-            <div className="absolute bottom-0 p-5 w-full">
-              <h4 className="text-white font-headline font-bold text-lg mb-1 drop-shadow">Maestría en Color</h4>
-              <p className="text-white/70 text-xs mb-4 font-medium">Esenciales de corrección de color</p>
-              <button className="w-full bg-white text-primary px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-surface-container-low transition-colors shadow-sm">
-                 Desbloquear Curso
-              </button>
-            </div>
-          </div>
+          <Link
+            href="/settings?tab=monetization"
+            className="w-full md:w-auto text-center bg-primary text-white px-5 py-2.5 rounded-xl font-headline font-bold text-xs shadow-md hover:scale-[1.02] active:scale-95 transition-all"
+          >
+            Conectar Cuenta
+          </Link>
         </div>
-      </section>
+      )}
 
-      {/* Statistics / Insights Bento Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-        {/* Earnings Stat */}
-        <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] ring-1 ring-outline-variant/10 hover:shadow-lg transition-shadow">
+      {/* Bento Grid: Estadísticas Principales */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Tarjeta de Ingresos Acumulados */}
+        <div className="bg-surface-container-low p-6 md:p-8 rounded-3xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <div className="flex justify-between items-start mb-6">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined">payments</span>
+              <span className="material-symbols-outlined text-xl">payments</span>
             </div>
-            <span className="text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-bold">+12.5%</span>
+            <span className="text-[10px] font-bold text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-wider">
+              Enviados
+            </span>
           </div>
-          <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Ingresos Totales</h5>
-          <p className="text-3xl font-headline font-extrabold text-on-surface">$24,480.00</p>
+          <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Ingresos Estimados</h5>
+          <p className="text-3xl font-headline font-black text-on-surface">
+            ${totalEarnings.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+          </p>
+          <p className="text-xs text-on-surface-variant font-medium mt-2">
+            Valor de la piña: ${pinaPrice} ARS
+          </p>
         </div>
 
-        {/* Subs Stat */}
-        <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] ring-1 ring-outline-variant/10 hover:shadow-lg transition-shadow">
+        {/* Tarjeta de Piñas Recibidas */}
+        <div className="bg-surface-container-low p-6 md:p-8 rounded-3xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary-container">
-              <span className="material-symbols-outlined">group_add</span>
+            <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+              <span className="material-symbols-outlined text-xl">favorite</span>
             </div>
-            <span className="text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-bold">+8.2%</span>
+            <span className="text-[10px] font-bold text-secondary bg-secondary/10 px-3 py-1 rounded-full uppercase tracking-wider">
+              {totalPinas === 1 ? "1 Piña" : `${totalPinas} Piñas`}
+            </span>
           </div>
-          <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Nuevos Suscriptores</h5>
-          <p className="text-3xl font-headline font-extrabold text-on-surface">1,204</p>
+          <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Apoyos Totales</h5>
+          <p className="text-3xl font-headline font-black text-on-surface">
+            {totalPinas}
+          </p>
+          <p className="text-xs text-on-surface-variant font-medium mt-2">
+            Total de cafecitos recibidos aprobados
+          </p>
         </div>
 
-        {/* Conversion Stat */}
-        <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] ring-1 ring-outline-variant/10 md:col-span-1 hover:shadow-lg transition-shadow">
-          <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 rounded-xl bg-tertiary-container/10 flex items-center justify-center text-tertiary">
-              <span className="material-symbols-outlined">auto_graph</span>
+        {/* Tarjeta de Meta / Objetivo */}
+        <div className="bg-surface-container-low p-6 md:p-8 rounded-3xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-tertiary-fixed/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center text-on-surface">
+              <span className="material-symbols-outlined text-xl">flag</span>
             </div>
+            {goalAmount > 0 && (
+              <span className="text-[10px] font-bold text-on-surface bg-surface-container-highest px-3 py-1 rounded-full uppercase tracking-wider">
+                {goalProgress.toFixed(0)}%
+              </span>
+            )}
           </div>
-          <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Tasa de Conversión</h5>
-          <p className="text-3xl font-headline font-extrabold text-on-surface">4.8%</p>
+          
+          {goalAmount > 0 ? (
+            <div className="space-y-3">
+              <div>
+                <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Meta: {goalTitle}</h5>
+                <p className="text-2xl font-headline font-black text-on-surface">
+                  ${totalEarnings.toLocaleString("es-AR")} / ${goalAmount.toLocaleString("es-AR")}
+                </p>
+              </div>
+              
+              {/* Barra de progreso - Regla No-Line */}
+              <div className="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500 rounded-full"
+                  style={{ width: `${goalProgress}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Objetivo de Recaudación</h5>
+              <p className="text-lg font-headline font-bold text-on-surface-variant italic">
+                Sin meta activa
+              </p>
+              <Link 
+                href="/settings?tab=monetization" 
+                className="text-xs text-primary font-bold hover:underline inline-block mt-3"
+              >
+                Configurar un objetivo creativo
+              </Link>
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Grid Secundario: Actividad Reciente & Atajos */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Actividad Reciente / Lista de Donaciones (Col Span 2) */}
+        <div className="lg:col-span-2 bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-sm ring-1 ring-outline-variant/10 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-headline font-black text-on-surface mb-1">Actividad Reciente</h3>
+            <p className="text-xs text-on-surface-variant font-medium mb-6">Últimos apoyos y mensajes de tu comunidad de fans.</p>
+
+            {donations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <span className="material-symbols-outlined text-4xl text-outline mb-3 animate-pulse">favorite</span>
+                <p className="text-sm font-bold text-on-surface">El estudio está preparado</p>
+                <p className="text-xs text-on-surface-variant max-w-xs mt-1 leading-relaxed">
+                  Cuando recibas tus primeras donaciones de Piñas, aparecerán listadas aquí junto con sus mensajes.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-outline-variant/10 max-h-[350px] overflow-y-auto pr-2 space-y-4">
+                {donations.map((donation) => (
+                  <div key={donation.id} className="pt-4 first:pt-0 flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-sm font-bold text-on-surface">
+                          {donation.donorName || "Donante Anónimo"}
+                        </span>
+                        <span className="text-xs text-on-surface-variant font-medium ml-2">
+                          donó {donation.quantity} {donation.quantity === 1 ? "Piña" : "Piñas"}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-outline font-bold uppercase tracking-wider">
+                        {new Date(donation.createdAt).toLocaleDateString("es-ES", {
+                          day: "numeric",
+                          month: "short"
+                        })}
+                      </span>
+                    </div>
+                    {donation.message && (
+                      <p className="text-xs bg-surface-container-low text-on-surface-variant p-3.5 rounded-xl italic font-medium leading-relaxed">
+                        "{donation.message}"
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Acciones Rápidas & Estado del Estudio */}
+        <div className="space-y-6">
+          
+          {/* Atajos Rápidos */}
+          <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-sm ring-1 ring-outline-variant/10">
+            <h3 className="text-xl font-headline font-black text-on-surface mb-6">Atajos del Estudio</h3>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleOpenNewPost}
+                className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95 group text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-xl">add_circle</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm font-bold">Nueva Publicación</span>
+                    <span className="block text-[10px] text-on-surface-variant mt-0.5">Sube imágenes o videos</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span>
+              </button>
+
+              <Link
+                href="/settings?tab=profile"
+                className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95 group text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-xl">account_circle</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm font-bold">Configurar Perfil</span>
+                    <span className="block text-[10px] text-on-surface-variant mt-0.5">Bio, slug y redes sociales</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-outline group-hover:text-secondary transition-colors">chevron_right</span>
+              </Link>
+
+              <Link
+                href="/settings?tab=monetization"
+                className="w-full flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-all hover:-translate-y-0.5 active:scale-95 group text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-tertiary-container/10 flex items-center justify-center text-tertiary group-hover:scale-105 transition-transform">
+                    <span className="material-symbols-outlined text-xl">payments</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm font-bold">Ajustes de Cobros</span>
+                    <span className="block text-[10px] text-on-surface-variant mt-0.5">Precio de Piña y Mercado Pago</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-outline group-hover:text-tertiary transition-colors">chevron_right</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Estadísticas de Contenido */}
+          <div className="bg-surface-container-lowest rounded-3xl p-6 md:p-8 shadow-sm ring-1 ring-outline-variant/10">
+            <h3 className="text-xl font-headline font-black text-on-surface mb-6">Estado de la Galería</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Link href="/content" className="p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl text-center transition-all block group">
+                <span className="block text-3xl font-headline font-black text-primary group-hover:scale-105 transition-transform">
+                  {mediaCount}
+                </span>
+                <span className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mt-2">
+                  Publicaciones
+                </span>
+              </Link>
+
+              <Link href="/packs" className="p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl text-center transition-all block group">
+                <span className="block text-3xl font-headline font-black text-secondary group-hover:scale-105 transition-transform">
+                  {packsCount}
+                </span>
+                <span className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mt-2">
+                  Packs Activos
+                </span>
+              </Link>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
     </div>
   );
 }
