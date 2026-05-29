@@ -228,7 +228,7 @@ function SettingsContent() {
                   <span className="material-symbols-outlined">payments</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-headline font-bold text-on-surface">Dóname una Piña</h3>
+                  <h3 className="text-xl font-headline font-bold text-on-surface">Dóname una pina</h3>
                   <p className="text-sm text-on-surface-variant font-medium">Configura tus cobros directamente con Mercado Pago.</p>
                 </div>
               </div>
@@ -290,7 +290,7 @@ function SettingsContent() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-bold text-on-surface mb-2">Valor de 1 Piña (ARS)</label>
+                    <label className="block text-sm font-bold text-on-surface mb-2">Valor de 1 pina (ARS)</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">$</span>
                       <input 

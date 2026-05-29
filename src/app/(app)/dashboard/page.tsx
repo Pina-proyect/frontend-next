@@ -99,20 +99,32 @@ export default function DashboardPage() {
             ¡Hola, {user?.fullName?.split(" ")[0]}!
           </h2>
           <p className="text-on-surface-variant font-body mt-1 text-sm md:text-base">
-            Bienvenido al panel de control de tu Estudio como <span className="text-primary font-bold">{getGenderedNiche(user?.gender || "creadora", user?.niche || null)}</span>.
+            Bienvenid{user?.gender === "creadora" ? "a" : "o"} al panel de control de tu Estudio como <span className="text-primary font-bold">{getGenderedNiche(user?.gender || "creadora", user?.niche || null)}</span>.
           </p>
         </div>
         
-        {/* Atajo rápido para ver perfil público */}
+        {/* Atajos de Perfil */}
         {user?.slug && (
-          <Link 
-            href={`/${user.slug}`} 
-            target="_blank"
-            className="inline-flex items-center gap-2 bg-surface-container-high hover:bg-surface-container-highest text-primary font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-sm active:scale-95"
-          >
-            <span className="material-symbols-outlined text-sm">visibility</span>
-            Ver mi Estudio Público
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/${user.slug}`);
+                toast({ title: "Enlace copiado", description: "El enlace de tu Estudio se ha copiado al portapapeles." });
+              }}
+              className="inline-flex justify-center items-center gap-2 bg-surface hover:bg-surface-container-high text-on-surface font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all ring-1 ring-outline-variant/20 shadow-sm active:scale-95"
+            >
+              <span className="material-symbols-outlined text-sm">content_copy</span>
+              Copiar Link
+            </button>
+            <Link 
+              href={`/${user.slug}`} 
+              target="_blank"
+              className="inline-flex justify-center items-center gap-2 bg-surface-container-high hover:bg-surface-container-highest text-primary font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-sm active:scale-95"
+            >
+              <span className="material-symbols-outlined text-sm">visibility</span>
+              Ver mi Estudio Público
+            </Link>
+          </div>
         )}
       </div>
 
@@ -124,7 +136,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-sm font-bold text-on-surface">Configura tus donaciones</p>
               <p className="text-xs text-on-surface-variant font-medium mt-0.5">
-                Aún no has conectado tu cuenta de Mercado Pago. Los visitantes no podrán donarte piñas hasta que la enlaces.
+                Aún no has conectado tu cuenta de Mercado Pago. Los visitantes no podrán donarte pinas hasta que la enlaces.
               </p>
             </div>
           </div>
@@ -156,7 +168,7 @@ export default function DashboardPage() {
             ${totalEarnings.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
           </p>
           <p className="text-xs text-on-surface-variant font-medium mt-2">
-            Valor de la piña: ${pinaPrice} ARS
+            Valor de la pina: ${pinaPrice} ARS
           </p>
         </div>
 
@@ -168,7 +180,7 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-xl">favorite</span>
             </div>
             <span className="text-[10px] font-bold text-secondary bg-secondary/10 px-3 py-1 rounded-full uppercase tracking-wider">
-              {totalPinas === 1 ? "1 Piña" : `${totalPinas} Piñas`}
+              {totalPinas === 1 ? "1 pina" : `${totalPinas} pinas`}
             </span>
           </div>
           <h5 className="text-on-surface-variant font-headline text-[10px] font-bold uppercase tracking-widest mb-1">Apoyos Totales</h5>
@@ -242,7 +254,7 @@ export default function DashboardPage() {
                 <span className="material-symbols-outlined text-4xl text-outline mb-3 animate-pulse">favorite</span>
                 <p className="text-sm font-bold text-on-surface">El estudio está preparado</p>
                 <p className="text-xs text-on-surface-variant max-w-xs mt-1 leading-relaxed">
-                  Cuando recibas tus primeras donaciones de Piñas, aparecerán listadas aquí junto con sus mensajes.
+                  Cuando recibas tus primeras donaciones de pinas, aparecerán listadas aquí junto con sus mensajes.
                 </p>
               </div>
             ) : (
@@ -255,7 +267,7 @@ export default function DashboardPage() {
                           {donation.donorName || "Donante Anónimo"}
                         </span>
                         <span className="text-xs text-on-surface-variant font-medium ml-2">
-                          donó {donation.quantity} {donation.quantity === 1 ? "Piña" : "Piñas"}
+                          donó {donation.quantity} {donation.quantity === 1 ? "pina" : "pinas"}
                         </span>
                       </div>
                       <span className="text-[10px] text-outline font-bold uppercase tracking-wider">
@@ -328,7 +340,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <span className="block text-sm font-bold">Ajustes de Cobros</span>
-                    <span className="block text-[10px] text-on-surface-variant mt-0.5">Precio de Piña y Mercado Pago</span>
+                    <span className="block text-[10px] text-on-surface-variant mt-0.5">Precio de pina y Mercado Pago</span>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-outline group-hover:text-tertiary transition-colors">chevron_right</span>

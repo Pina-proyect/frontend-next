@@ -6,6 +6,8 @@ interface OnboardingState {
   slug: string;
   bio: string;
   gender: string;
+  country: string;
+  profileImage: string | null;
   connectedSocials: {
     instagram: boolean;
     youtube: boolean;
@@ -15,7 +17,7 @@ interface OnboardingState {
   nextStep: () => void;
   prevStep: () => void;
   setNiche: (niche: string) => void;
-  setProfileInfo: (slug: string, bio: string, gender: string) => void;
+  setProfileInfo: (slug: string, bio: string, gender: string, country: string, profileImage: string | null) => void;
   toggleSocial: (platform: keyof OnboardingState["connectedSocials"]) => void;
 }
 
@@ -25,6 +27,8 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   slug: "",
   bio: "",
   gender: "creadora",
+  country: "",
+  profileImage: null,
   connectedSocials: {
     instagram: true, // Defaulting per Figma mockups
     youtube: false,
@@ -36,7 +40,7 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
   
   setNiche: (niche) => set({ niche }),
-  setProfileInfo: (slug, bio, gender) => set({ slug, bio, gender }),
+  setProfileInfo: (slug, bio, gender, country, profileImage) => set({ slug, bio, gender, country, profileImage }),
   
   toggleSocial: (platform) => set((state) => ({
     connectedSocials: {
