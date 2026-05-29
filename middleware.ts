@@ -1,38 +1,33 @@
 // Middleware de Next.js para proteger rutas sensibles usando cookies HttpOnly.
-// Propósito: bloquear acceso a `/dashboard` si no hay sesión válida.
-// Estrategia:
-// - Verificamos presencia de cookies de sesión (p. ej. `refreshToken` o `accessToken`).
-// - Si no existen, redirigimos a `/login` pasando `next` para retorno post-login.
-// - No inspeccionamos el contenido del token (por seguridad y simplicidad en frontend).
+// Propósito: bloquear acceso a `/dashboard`, `/onboarding` y otras áreas privadas si no hay sesión.
 
 import { NextRequest, NextResponse } from "next/server";
 
-// Middleware de Seguridad
-// Ahora protegemos TODAS las rutas no públicas (grupo (app) y cualquier otra privada),
-// dejando explícitamente accesibles las rutas públicas.
-
-// 1) Definimos las rutas públicas explícitas
-const PUBLIC_MATCHERS = [
-  "/",
-  "/login",
-  "/register",
-  "/auth/callback",
-  "/api/pina/auth/google", // Inicio de OAuth debe ser público
-  // Futuro: perfiles públicos, ej. '/[username]' → requerirá lógica de matching
+// 1) Definimos los prefijos de rutas que requieren autenticación de forma mandatoria.
+const PRIVATE_PREFIXES = [
+  "/dashboard",
+  "/onboarding",
+  "/settings",
+  "/packs",
+  "/content",
+  "/payment-status",
 ];
 
-// 2) Lógica: permitir públicas; proteger el resto
+// 2) Lógica: proteger solo las rutas privadas; permitir acceso libre a todo lo demás
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ¿La ruta actual es pública? Igualdad exacta por ahora.
-  const isPublic = PUBLIC_MATCHERS.some((prefix) => pathname === prefix);
-  if (isPublic) {
+  // ¿La ruta actual requiere autenticación?
+  const isPrivate = PRIVATE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+  );
+
+  // Si no es una ruta privada, permitimos el paso libre (p. ej., landing, /explore, /[slug], y APIs)
+  if (!isPrivate) {
     return NextResponse.next();
   }
 
   // 3) Protección: verificamos cookies típicas de sesión
-  // Nota: el backend Nest debe establecer 'refreshToken' como HttpOnly.
   const hasRefresh = req.cookies.has("refreshToken") || req.cookies.has("refresh_token");
   const hasAccess = req.cookies.has("accessToken");
 
