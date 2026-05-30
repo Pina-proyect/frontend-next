@@ -17,6 +17,7 @@ export interface User {
   tokenVersion: number;
   slug: string | null;
   bio: string | null;
+  photoPath?: string | null;
   role: "CREATOR" | "CONSUMER";
   mpAccessToken?: string | null;
   pinaPrice?: number | null;
