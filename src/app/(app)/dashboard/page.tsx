@@ -15,7 +15,8 @@ interface Donation {
 }
 
 const getGenderedNiche = (gender: string, niche: string | null) => {
-  const prefix = gender === "creador" ? "Creador" : "Creadora";
+  const g = gender?.toLowerCase();
+  const prefix = g === "creador" ? "Creador" : "Creadora";
   if (!niche) return `${prefix} Digital`;
   switch (niche) {
     case "photography": return `${prefix} de Fotografía`;
@@ -99,33 +100,34 @@ export default function DashboardPage() {
             ¡Hola, {user?.fullName?.split(" ")[0]}!
           </h2>
           <p className="text-on-surface-variant font-body mt-1 text-sm md:text-base">
-            Bienvenid{user?.gender === "creadora" ? "a" : "o"} al panel de control de tu Estudio como <span className="text-primary font-bold">{getGenderedNiche(user?.gender || "creadora", user?.niche || null)}</span>.
+            Bienvenid{user?.gender?.toLowerCase() === "creador" ? "o" : "a"} al panel de control de tu Estudio como <span className="text-primary font-bold">{getGenderedNiche(user?.gender || "creadora", user?.niche || null)}</span>.
           </p>
         </div>
         
         {/* Atajos de Perfil */}
-        {user?.slug && (
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/${user.slug}`);
-                toast({ title: "Enlace copiado", description: "El enlace de tu Estudio se ha copiado al portapapeles." });
-              }}
-              className="inline-flex justify-center items-center gap-2 bg-surface hover:bg-surface-container-high text-on-surface font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all ring-1 ring-outline-variant/20 shadow-sm active:scale-95"
-            >
-              <span className="material-symbols-outlined text-sm">content_copy</span>
-              Copiar Link
-            </button>
+        <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
+          <button 
+            onClick={() => {
+              const url = user?.slug ? `${window.location.origin}/${user.slug}` : window.location.origin;
+              navigator.clipboard.writeText(url);
+              toast({ title: "Enlace copiado", description: "El enlace de tu Estudio se ha copiado al portapapeles." });
+            }}
+            className="inline-flex justify-center items-center gap-2 bg-primary text-white hover:opacity-90 font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-md active:scale-95"
+          >
+            <span className="material-symbols-outlined text-sm" style={{fontVariationSettings: "'FILL' 1"}}>share</span>
+            Compartir Perfil
+          </button>
+          {user?.slug && (
             <Link 
               href={`/${user.slug}`} 
               target="_blank"
-              className="inline-flex justify-center items-center gap-2 bg-surface-container-high hover:bg-surface-container-highest text-primary font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all shadow-sm active:scale-95"
+              className="inline-flex justify-center items-center gap-2 bg-surface hover:bg-surface-container-high text-primary font-headline font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-xl transition-all ring-1 ring-outline-variant/20 shadow-sm active:scale-95"
             >
               <span className="material-symbols-outlined text-sm">visibility</span>
-              Ver mi Estudio Público
+              Ver Público
             </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Alerta de cuenta no conectada (Mercado Pago) */}

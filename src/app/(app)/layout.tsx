@@ -245,12 +245,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-bold text-on-surface leading-none truncate max-w-[120px]">{profile?.fullName}</p>
                   <p className="text-[10px] font-headline font-semibold text-on-surface-variant uppercase tracking-wider mt-1 truncate max-w-[120px]">
-                    @{profile?.slug || "creadora"}
+                    @{profile?.slug || profile?.fullName?.split(" ")[0]?.toLowerCase() || "creadora"}
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center ring-2 ring-primary/20 text-primary uppercase font-bold overflow-hidden shadow-sm">
-                  {profile?.fullName?.charAt(0) || "U"}
-                </div>
+                {profile?.photoPath ? (
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm ring-2 ring-primary/20">
+                    <img src={profile.photoPath} alt={profile.fullName} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center ring-2 ring-primary/20 text-primary uppercase font-bold overflow-hidden shadow-sm">
+                    {profile?.fullName?.charAt(0) || "U"}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -34,82 +34,68 @@ function Step1ChooseNiche() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-16">
         {/* Photography */}
-        <div className="group cursor-pointer" onClick={() => handleSelect("photography")}>
-          <div className={`relative overflow-hidden h-40 rounded-xl transition-all hover:-translate-y-1 ${niche === "photography" ? "ring-4 ring-primary shadow-2xl" : "shadow-md"}`}>
-            <div className="absolute inset-0 bg-surface-container-high flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-4xl mb-2">photo_camera</span>
-              <h3 className="font-headline font-bold text-on-surface">Fotografía</h3>
+        <div className="md:col-span-8 group cursor-pointer" onClick={() => handleSelect("photography")}>
+          <div className={`relative overflow-hidden h-64 rounded-xl transition-all hover:-translate-y-1 ${niche === "photography" ? "ring-4 ring-primary shadow-2xl" : "shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)]"}`}>
+            <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-105">
+              <img className="w-full h-full object-cover" alt="Photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGWSW_875fTAe1DDr_SZxsw6F40qEQwgP6Qtl7ItjoBnirsTTUKfs56VXUNa6cWZiUgAv6OdJO7-ykCJ5As8DNflbQSRZ8b3egD8hThcQONp0L-vD_vZxL2-e0O-8JD_aBWzBuZYTF5op6S_H1582LffYFIASp5qSOJ8ATB5JT9sOAKar3VifinjF1GlaxfrGTYwFBFOZ0k4NiA47m8Gav8rcYXr8zgENX2p4onSgqrfNtwXFFVJBj2cOfrRvQaBybL1oQ9HHcohG2" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            </div>
+            <div className="absolute bottom-0 left-0 p-8 z-10">
+              <span className="material-symbols-outlined text-white text-3xl mb-2">photo_camera</span>
+              <h3 className="text-2xl font-headline font-bold text-white tracking-tight">Fotografía</h3>
+              <p className="text-white/80 text-sm">Narrativa visual a través del lente.</p>
             </div>
           </div>
         </div>
 
-        {/* Film */}
-        <div className="group cursor-pointer" onClick={() => handleSelect("film")}>
-          <div className={`relative overflow-hidden h-40 rounded-xl transition-all hover:-translate-y-1 ${niche === "film" ? "ring-4 ring-primary shadow-2xl" : "shadow-md"}`}>
-            <div className="absolute inset-0 bg-surface-container-high flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-4xl mb-2">movie</span>
-              <h3 className="font-headline font-bold text-on-surface">Cine / Video</h3>
+        {/* Film Card */}
+        <div className="md:col-span-4 group cursor-pointer" onClick={() => handleSelect("film")}>
+          <div className={`relative overflow-hidden h-64 rounded-xl transition-all hover:-translate-y-1 ${niche === "film" ? "ring-4 ring-primary shadow-2xl" : "shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)]"}`}>
+            <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-105">
+              <img className="w-full h-full object-cover" alt="Film" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6YsuXzOnuqmiOywpkOKV-thraCSTTJ6y5xBbk6AHXYHcE9M325YUF_FGWymz4RmsI6vQQAUuQJ2bH0JZ1C0UOuw5z1uxu8ApvJ0u90Pfzb2JANix_QvtT43NecjXtwewctPFcILe7f75MfOEaal1lHG3JXNlEPvT_ePJeuiLV7m9eeGMc6NzgY2o93r83gjWHVJSMQbk6zslVqh3FgrXub1l55lrTdSZmdgXpRU7zioN_9i9JamIhUdNtlPLGGGqMxEyM2fgShr0x" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            </div>
+            <div className="absolute bottom-0 left-0 p-6 z-10">
+              <span className="material-symbols-outlined text-white text-3xl mb-2">movie</span>
+              <h3 className="text-xl font-headline font-bold text-white tracking-tight">Cine</h3>
+              <p className="text-white/80 text-xs">Cinematografía y Movimiento.</p>
             </div>
           </div>
         </div>
 
-        {/* Digital Art */}
-        <div className="group cursor-pointer" onClick={() => handleSelect("digital-art")}>
-          <div className={`relative overflow-hidden h-40 rounded-xl transition-all hover:-translate-y-1 ${niche === "digital-art" ? "ring-4 ring-primary shadow-2xl" : "shadow-md"}`}>
-            <div className="absolute inset-0 bg-surface-container-high flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-4xl mb-2">brush</span>
-              <h3 className="font-headline font-bold text-on-surface">Arte Digital</h3>
+        {/* Digital Art Card */}
+        <div className="md:col-span-4 group cursor-pointer" onClick={() => handleSelect("digital-art")}>
+          <div className={`relative overflow-hidden h-64 rounded-xl transition-all hover:-translate-y-1 ${niche === "digital-art" ? "ring-4 ring-primary shadow-2xl" : "shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)]"}`}>
+            <div className="absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-105">
+              <img className="w-full h-full object-cover" alt="Digital Art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiKbL72mFFGnwYsAbsWHjfUvFpfbScmVjrKsFCV52cUBPPjKb8VtdqgDT30A-e3-NeuE5alK1F_tGcL1OR0fIAnK7Eo2VguwJv7ir0buo7sMJru92ER5S4-wggNx60GZAyd0I7QlYaOAYM-kPCiMFBG5e4fDisdKokT7CBdI620OGJ3RQS0lLa-bP2PPKPr3E2m9G-8D2eO5dhYgkaO-t4WrRpZSQCE-7IscqBxPQg8mWXjR3o-K59mt17LwtzQCfWv__2FrsIln0E" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             </div>
-          </div>
-        </div>
-
-        {/* Music */}
-        <div className="group cursor-pointer" onClick={() => handleSelect("music")}>
-          <div className={`relative overflow-hidden h-40 rounded-xl transition-all hover:-translate-y-1 ${niche === "music" ? "ring-4 ring-primary shadow-2xl" : "shadow-md"}`}>
-            <div className="absolute inset-0 bg-surface-container-high flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-4xl mb-2">music_note</span>
-              <h3 className="font-headline font-bold text-on-surface">Música</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Programming */}
-        <div className="group cursor-pointer" onClick={() => handleSelect("programming")}>
-          <div className={`relative overflow-hidden h-40 rounded-xl transition-all hover:-translate-y-1 ${niche === "programming" ? "ring-4 ring-primary shadow-2xl" : "shadow-md"}`}>
-            <div className="absolute inset-0 bg-surface-container-high flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-4xl mb-2">code</span>
-              <h3 className="font-headline font-bold text-on-surface">Programación</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Writing */}
-        <div className="group cursor-pointer" onClick={() => handleSelect("writing")}>
-          <div className={`relative overflow-hidden h-40 rounded-xl transition-all hover:-translate-y-1 ${niche === "writing" ? "ring-4 ring-primary shadow-2xl" : "shadow-md"}`}>
-            <div className="absolute inset-0 bg-surface-container-high flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-4xl mb-2">edit_document</span>
-              <h3 className="font-headline font-bold text-on-surface">Escritura</h3>
+            <div className="absolute bottom-0 left-0 p-6 z-10">
+              <span className="material-symbols-outlined text-white text-3xl mb-2">brush</span>
+              <h3 className="text-xl font-headline font-bold text-white tracking-tight">Arte Digital</h3>
+              <p className="text-white/80 text-xs">Ilustración y Diseño 3D.</p>
             </div>
           </div>
         </div>
 
         {/* Something Else */}
-        <div className="sm:col-span-2 md:col-span-3 group cursor-pointer" onClick={() => { if (!niche.startsWith("custom:")) handleSelect("custom:"); }}>
-          <div className={`relative overflow-hidden h-40 rounded-xl border transition-all hover:-translate-y-1 flex items-center justify-center bg-surface-container-low ${niche.startsWith("custom:") ? "border-primary ring-2 ring-primary bg-primary/5" : "border-outline-variant/15 shadow-md"}`}>
-            <div className="text-center p-4 w-full max-w-sm">
+        <div className="md:col-span-8 group cursor-pointer" onClick={() => { if (!niche.startsWith("custom:")) handleSelect("custom:"); }}>
+          <div className={`relative overflow-hidden h-64 rounded-xl border transition-all hover:-translate-y-1 flex items-center justify-center bg-surface-container-low ${niche.startsWith("custom:") ? "border-primary ring-2 ring-primary bg-primary/5" : "border-outline-variant/15 shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)]"}`}>
+            <div className="text-center p-8 w-full max-w-sm">
               {niche.startsWith("custom:") ? (
                 <div className="w-full">
-                  <h3 className="text-lg font-headline font-bold text-on-surface tracking-tight mb-2">¿Cuál es tu nicho?</h3>
-                  <input type="text" autoFocus className="w-full px-4 py-3 bg-surface-container-highest rounded-lg border border-outline-variant/30 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej: Finanzas, Juegos..." value={niche.replace("custom:", "")} onChange={(e) => setNiche("custom:" + e.target.value)} onClick={(e) => e.stopPropagation()} />
+                  <h3 className="text-xl font-headline font-bold text-on-surface tracking-tight mb-4">¿Cuál es tu nicho?</h3>
+                  <input type="text" autoFocus className="w-full px-4 py-4 bg-surface-container-highest rounded-xl border border-outline-variant/30 text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary/50 outline-none" placeholder="Ej: Finanzas, Juegos..." value={niche.replace("custom:", "")} onChange={(e) => setNiche("custom:" + e.target.value)} onClick={(e) => e.stopPropagation()} />
                 </div>
               ) : (
                 <>
-                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full mb-2 bg-surface-container-highest text-primary`}>
-                    <span className="material-symbols-outlined text-2xl">add</span>
+                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-surface-container-highest text-primary`}>
+                    <span className="material-symbols-outlined text-3xl">add</span>
                   </div>
-                  <h3 className="text-lg font-headline font-bold text-on-surface tracking-tight">¿Algo más?</h3>
+                  <h3 className="text-xl font-headline font-bold text-on-surface tracking-tight">¿Algo más?</h3>
+                  <p className="text-on-surface-variant text-sm mt-1">Escribe tu propio nicho creativo.</p>
                 </>
               )}
             </div>
