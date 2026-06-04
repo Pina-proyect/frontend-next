@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -35,11 +36,25 @@ interface LoginResponse {
 export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const [emailNotVerified, setEmailNotVerified] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { email: "", password: "" },
   })
+
+  const handleResendVerification = async (email: string) => {
+    try {
+      await http("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      })
+      toast({ title: "Email reenviado", description: "Revisa tu bandeja de entrada." })
+      setEmailNotVerified(null)
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "No se pudo reenviar el email." })
+    }
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -57,11 +72,16 @@ export default function LoginPage() {
         router.push(hasSlug ? "/dashboard" : "/onboarding")
       }
     } catch (error: unknown) {
-      toast({
-        variant: "destructive",
-        title: "Error al iniciar sesión",
-        description: error instanceof Error ? error.message : "Credenciales incorrectas",
-      })
+      const message = error instanceof Error ? error.message : ""
+      if (message === "EMAIL_NOT_VERIFIED") {
+        setEmailNotVerified(values.email)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error al iniciar sesión",
+          description: message || "Credenciales incorrectas",
+        })
+      }
     }
   }
 
@@ -144,6 +164,22 @@ export default function LoginPage() {
                       </FormItem>
                     )}
                   />
+
+                  {/* Email not verified alert */}
+                  {emailNotVerified && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                      <p className="font-semibold mb-1">Email no verificado</p>
+                      <p className="mb-3">Debes verificar tu email antes de iniciar sesión.</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleResendVerification(emailNotVerified)}
+                      >
+                        Reenviar email de verificación
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Primary CTA */}
                   <Button type="submit" className="w-full shadow-[0_12px_32px_-4px_rgba(67,82,165,0.2)]" disabled={form.formState.isSubmitting}>
