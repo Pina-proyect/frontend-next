@@ -128,12 +128,14 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                 </div>
                 <p className="text-on-surface-variant text-lg font-medium">@{profile.slug}</p>
                 <div className="flex items-center justify-center md:justify-start gap-4 mt-6">
-                    <button className="bg-primary text-white px-8 py-3.5 rounded-xl font-headline font-bold text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                        Seguir Estudio
-                    </button>
-                    <button className="glass-panel border-outline-variant/20 px-8 py-3.5 rounded-xl font-headline font-bold text-sm hover:bg-surface-container-low transition-all">
-                        Mensaje
-                    </button>
+                    <span className="bg-surface/50 text-on-surface-variant px-8 py-3.5 rounded-xl font-headline font-bold text-sm">
+                        Siguiendo
+                    </span>
+                    {profile.instagram || profile.tiktok || profile.youtube ? (
+                        <span className="glass-panel border-outline-variant/20 px-8 py-3.5 rounded-xl font-headline font-bold text-sm text-on-surface-variant">
+                            Disponible en redes
+                        </span>
+                    ) : null}
                 </div>
             </div>
         </div>

@@ -5,6 +5,7 @@ import { http } from "@/lib/http-client";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Donation {
   id: string;
@@ -27,6 +28,7 @@ const getGenderedNiche = (gender: string, niche: string | null) => {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const { toast } = useToast();
   
@@ -76,7 +78,7 @@ export default function DashboardPage() {
   const goalProgress = goalAmount > 0 ? Math.min((totalEarnings / goalAmount) * 100, 100) : 0;
 
   const handleOpenNewPost = () => {
-    window.dispatchEvent(new Event("open-new-post-modal"));
+    router.push("/content");
   };
 
   if (loading) {
