@@ -24,9 +24,13 @@ function AuthCallbackContent() {
         const hasSlug = !!user?.slug?.trim();
         router.push(hasSlug ? "/dashboard" : "/onboarding");
       } catch (error) {
-        console.error("Error al obtener datos del usuario:", error);
-        toast({ variant: "destructive", title: "Error al cargar tu perfil", description: "No se pudo obtener tus datos" });
-        router.push("/login?error=fetch_user_failed");
+        console.error("❌ Error en /auth/me:", error);
+        const detail = error instanceof TypeError
+          ? "NETWORK_ERROR"
+          : error instanceof Error
+            ? error.message.substring(0, 200)
+            : "UNKNOWN";
+        router.push(`/login?error=fetch_user_failed&detail=${encodeURIComponent(detail)}`);
       }
     };
 

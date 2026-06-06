@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -37,6 +37,20 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [emailNotVerified, setEmailNotVerified] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+    const detail = params.get("detail");
+    if (error === "fetch_user_failed" && detail) {
+      console.error("🔍 Google callback error detail:", detail);
+      toast({
+        variant: "destructive",
+        title: "Error de autenticación",
+        description: `Código: ${detail}`,
+      });
+    }
+  }, [toast])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
