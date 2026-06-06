@@ -18,18 +18,24 @@ function AuthCallbackContent() {
 
     const proceedWithTokens = async (access: string, refresh: string) => {
       try {
-        const user = await http<User>("/auth/me", { headers: { Authorization: `Bearer ${access}` } });
+        const api = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
+        const res = await fetch(`${api}/auth/me`, {
+          headers: { Authorization: `Bearer ${access}` },
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => res.statusText);
+          throw new Error(`HTTP ${res.status}: ${text.substring(0, 200)}`);
+        }
+        const user: User = await res.json();
         setAuthSession({ accessToken: access, refreshToken: refresh, user });
         toast({ title: "Autenticación exitosa", description: "Has iniciado sesión correctamente" });
         const hasSlug = !!user?.slug?.trim();
         router.push(hasSlug ? "/dashboard" : "/onboarding");
       } catch (error) {
         console.error("❌ Error en /auth/me:", error);
-        const detail = error instanceof TypeError
-          ? "NETWORK_ERROR"
-          : error instanceof Error
-            ? error.message.substring(0, 200)
-            : "UNKNOWN";
+        const detail = error instanceof Error
+          ? error.message.substring(0, 200)
+          : "UNKNOWN";
         router.push(`/login?error=fetch_user_failed&detail=${encodeURIComponent(detail)}`);
       }
     };
