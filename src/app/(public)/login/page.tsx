@@ -77,12 +77,11 @@ export default function LoginPage() {
       })
       setAuthSession(response)
       document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
-      const me = await http<User>("/auth/me")
       
-      if (me?.role === "CONSUMER") {
+      if (response.user?.role === "CONSUMER") {
         router.push("/explore")
       } else {
-        const hasSlug = !!me?.slug?.trim()
+        const hasSlug = !!response.user?.slug?.trim()
         router.push(hasSlug ? "/dashboard" : "/onboarding")
       }
     } catch (error: unknown) {
