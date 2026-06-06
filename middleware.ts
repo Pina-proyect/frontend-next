@@ -28,10 +28,13 @@ export function middleware(req: NextRequest) {
   }
 
   // 3) Protección: verificamos cookies típicas de sesión
+  //    auth_session es una cookie no-HttpOnly seteada por el callback page
+  //    (necesaria porque las cookies HttpOnly del backend están en otro dominio)
+  const hasAuthSession = req.cookies.has("auth_session");
   const hasRefresh = req.cookies.has("refreshToken") || req.cookies.has("refresh_token");
   const hasAccess = req.cookies.has("accessToken");
 
-  if (hasRefresh || hasAccess) {
+  if (hasAuthSession || hasRefresh || hasAccess) {
     // Hay sesión → permitir acceso a rutas privadas
     return NextResponse.next();
   }

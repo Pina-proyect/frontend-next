@@ -117,19 +117,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(!storedUser);
   // Verificación de sesión
   useEffect(() => {
-    console.log("🔍 AppLayout - storedUser:", storedUser, "accessToken:", accessToken?.substring(0,20), "refreshToken:", !!refreshToken, "loading:", loading);
     let mounted = true;
     const verify = async () => {
-      console.log("🔍 AppLayout - verify() called, token from store:", getAuthToken()?.substring(0,20));
       try {
         const me = await http<User>("/auth/me");
         if (mounted) {
-          console.log("🔍 AppLayout - verify() succeded, user:", me.email);
           setProfile(me);
           setLoading(false);
         }
       } catch (error) {
-        console.error("🔍 AppLayout - verify() FAILED:", error);
         if (mounted) {
           toast({ variant: "destructive", title: "Aviso", description: "Tu sesión ha expirado" });
           router.replace("/login");

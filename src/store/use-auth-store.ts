@@ -50,12 +50,16 @@ const useAuthStoreBase = create<AuthState>()(
       user: null as User | null,
       setSession: (data: { accessToken: string; refreshToken: string; user: User }) =>
         set(data),
-      clearSession: () =>
+      clearSession: () => {
+        if (typeof document !== "undefined") {
+          document.cookie = "auth_session=; path=/; max-age=0; SameSite=Lax; Secure";
+        }
         set({
           accessToken: undefined as string | undefined,
           refreshToken: undefined as string | undefined,
           user: null as User | null,
-        }),
+        });
+      },
     }),
     {
       name: "pina-auth-session",

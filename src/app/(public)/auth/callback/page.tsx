@@ -28,11 +28,11 @@ function AuthCallbackContent() {
         }
         const user: User = await res.json();
         setAuthSession({ accessToken: access, refreshToken: refresh, user });
+        document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
         toast({ title: "Autenticación exitosa", description: "Has iniciado sesión correctamente" });
         const hasSlug = !!user?.slug?.trim();
         router.push(hasSlug ? "/dashboard" : "/onboarding");
       } catch (error) {
-        console.error("❌ Error en /auth/me:", error);
         const detail = error instanceof Error
           ? error.message.substring(0, 200)
           : "UNKNOWN";
@@ -56,12 +56,12 @@ function AuthCallbackContent() {
         }
         const data: { accessToken: string; refreshToken: string; user: User } = await res.json();
         setAuthSession(data);
+        document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
         toast({ title: "Sesión restaurada", description: "Tu sesión fue recuperada correctamente" });
         const me = await http<User>("/auth/me");
         const hasSlug = !!me?.slug?.trim();
         router.push(hasSlug ? "/dashboard" : "/onboarding");
       } catch (error) {
-        console.error("Error en refresh por cookie:", error);
         toast({ variant: "destructive", title: "Autenticación fallida", description: "Intenta iniciar sesión nuevamente" });
         router.push("/login?error=auth_failed");
       }

@@ -43,7 +43,6 @@ export default function LoginPage() {
     const error = params.get("error");
     const detail = params.get("detail");
     if (error === "fetch_user_failed" && detail) {
-      console.error("🔍 Google callback error detail:", detail);
       toast({
         variant: "destructive",
         title: "Error de autenticación",
@@ -77,6 +76,7 @@ export default function LoginPage() {
         body: JSON.stringify(values),
       })
       setAuthSession(response)
+      document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
       const me = await http<User>("/auth/me")
       
       if (me?.role === "CONSUMER") {
@@ -86,8 +86,9 @@ export default function LoginPage() {
         router.push(hasSlug ? "/dashboard" : "/onboarding")
       }
     } catch (error: unknown) {
+      const code = (error as any)?.code
       const message = error instanceof Error ? error.message : ""
-      if (message === "EMAIL_NOT_VERIFIED") {
+      if (code === "EMAIL_NOT_VERIFIED") {
         setEmailNotVerified(values.email)
       } else {
         toast({
