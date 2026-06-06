@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
 import { http } from "@/lib/http-client";
+import { setAuthSession, type User } from "@/store/use-auth-store";
 
 const formSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.string().email({ message: "Email inválido" })),
@@ -42,7 +43,6 @@ const formSchema = z.object({
     const realAge = hasBirthdayPassed ? age : age - 1;
     return realAge >= 18;
   }, { message: "Debes ser mayor de 18 años" }),
-  role: z.enum(["CREATOR", "CONSUMER"]),
 });
 
 interface KycResponse {
@@ -54,10 +54,11 @@ interface KycResponse {
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [showNextSteps, setShowNextSteps] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: "", fullName: "", password: "", birthDate: "", role: "CONSUMER" },
+    defaultValues: { email: "", fullName: "", password: "", birthDate: "" },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -67,15 +68,22 @@ export default function RegisterPage() {
         fullName: values.fullName,
         password: values.password,
         birthDate: values.birthDate,
-        role: values.role,
+        role: "CREATOR",
       };
 
       const response = await http<KycResponse>("/registro/creadora", {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      toast({ variant: "info", title: "Registro iniciado", description: response?.message || "Verificación pendiente" });
-      router.push("/login");
+
+      // Auto-login
+      const loginResponse = await http<{ accessToken: string; refreshToken: string; user: User }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email: values.email, password: values.password }),
+      });
+      setAuthSession(loginResponse);
+
+      setShowNextSteps(true);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error al registrar";
       const isEmailTaken = /409|EMAIL_TAKEN|ya registrado/i.test(message);
@@ -113,165 +121,144 @@ export default function RegisterPage() {
 
             {/* Glassmorphism Card */}
             <div className="glass-panel rounded-[12px] p-8 sm:p-10 shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] ring-1 ring-outline-variant/15">
-              <header className="mb-8">
-                <h1 className="font-headline font-bold text-2xl tracking-tight text-on-surface mb-1">Únete a nosotros</h1>
-                <p className="text-on-surface-variant font-label text-sm">Ingresa tus datos para solicitar acceso al ecosistema.</p>
-              </header>
+              {showNextSteps ? (
+                <div className="fade-in animate-in slide-in-from-bottom-4 duration-500">
+                  <header className="mb-8 text-center">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+                      <span className="material-symbols-outlined text-4xl" style={{fontVariationSettings: "'FILL' 1"}}>check_circle</span>
+                    </div>
+                    <h1 className="font-headline font-bold text-3xl tracking-tight text-on-surface mb-2">¡Cuenta creada con éxito!</h1>
+                    <p className="text-on-surface-variant font-body text-sm">Elige cómo quieres continuar tu experiencia en Pina.</p>
+                  </header>
+                  <div className="flex flex-col gap-4">
+                    <Button onClick={() => router.push("/onboarding")} className="w-full py-6 text-sm font-headline shadow-md">
+                      Configurar mi Estudio Público
+                    </Button>
+                    <Button onClick={() => router.push("/dashboard")} variant="outline" className="w-full py-6 text-sm font-headline border-primary/20 hover:bg-primary/5 text-primary">
+                      Ir directo al Panel de Control
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <header className="mb-8">
+                    <h1 className="font-headline font-bold text-2xl tracking-tight text-on-surface mb-1">Únete a nosotros</h1>
+                    <p className="text-on-surface-variant font-label text-sm">Ingresa tus datos para solicitar acceso al ecosistema.</p>
+                  </header>
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  {/* Role Selection */}
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3 mb-6">
-                        <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase text-center mb-2">
-                          ¿Qué quieres hacer en Pina?
-                        </FormLabel>
-                        <FormControl>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <button
-                              type="button"
-                              onClick={() => field.onChange("CONSUMER")}
-                              className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                                field.value === "CONSUMER" 
-                                  ? "border-primary bg-primary/5 text-primary shadow-sm" 
-                                  : "border-outline-variant/30 text-on-surface-variant hover:border-primary/30"
-                              }`}
-                            >
-                              <span className="material-symbols-outlined text-3xl mb-2" style={field.value === "CONSUMER" ? {fontVariationSettings: "'FILL' 1"} : {}}>favorite</span>
-                              <span className="font-headline font-bold text-sm">Apoyar Creador/a</span>
-                            </button>
-                            
-                            <button
-                              type="button"
-                              onClick={() => field.onChange("CREATOR")}
-                              className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                                field.value === "CREATOR" 
-                                  ? "border-primary bg-primary/5 text-primary shadow-sm" 
-                                  : "border-outline-variant/30 text-on-surface-variant hover:border-primary/30"
-                              }`}
-                            >
-                              <span className="material-symbols-outlined text-3xl mb-2" style={field.value === "CREATOR" ? {fontVariationSettings: "'FILL' 1"} : {}}>video_camera_front</span>
-                              <span className="font-headline font-bold text-sm">Crear un Estudio</span>
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-[11px] text-center" />
-                      </FormItem>
-                    )}
-                  />
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {/* Full Name Field */}
+                        <FormField
+                          control={form.control}
+                          name="fullName"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
+                                Nombre Completo
+                              </FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ej: Luna Deseo" type="text" {...field} />
+                              </FormControl>
+                              <FormMessage className="text-[11px]" />
+                            </FormItem>
+                          )}
+                        />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* Full Name Field */}
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
-                            Nombre Completo
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Luna Deseo" type="text" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-[11px]" />
-                        </FormItem>
-                      )}
-                    />
+                        {/* Birth Date Field */}
+                        <FormField
+                          control={form.control}
+                          name="birthDate"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
+                                Fecha de Nac.
+                              </FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} />
+                              </FormControl>
+                              <FormMessage className="text-[11px]" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
-                    {/* Birth Date Field */}
-                    <FormField
-                      control={form.control}
-                      name="birthDate"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
-                            Fecha de Nac.
-                          </FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                          <FormMessage className="text-[11px]" />
-                        </FormItem>
-                      )}
-                    />
+                      {/* Email Field */}
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem className="space-y-2">
+                            <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
+                              Correo electrónico
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="tu@email.com" type="email" {...field} />
+                            </FormControl>
+                            <FormMessage className="text-[11px]" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Password Field */}
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem className="space-y-2">
+                            <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
+                              Contraseña
+                            </FormLabel>
+                            <FormControl>
+                              <Input placeholder="••••••••" type="password" {...field} />
+                            </FormControl>
+                            <FormMessage className="text-[11px]" />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Primary CTA */}
+                      <Button type="submit" className="w-full mt-2 shadow-[0_12px_32px_-4px_rgba(67,82,165,0.2)]" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? "Cargando..." : "Crear cuenta"}
+                      </Button>
+                    </form>
+                  </Form>
+
+                  {/* Divider */}
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-outline-variant/20"></div>
+                    </div>
+                    <div className="relative flex justify-center text-[10px] uppercase font-label tracking-widest text-on-surface-variant/40">
+                      <span className="bg-surface/80 backdrop-blur-md px-4">O continúa con</span>
+                    </div>
                   </div>
 
-                  {/* Email Field */}
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
-                          Correo electrónico
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="tu@email.com" type="email" {...field} />
-                        </FormControl>
-                        <FormMessage className="text-[11px]" />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Password Field */}
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
-                          Contraseña
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="••••••••" type="password" {...field} />
-                        </FormControl>
-                        <FormMessage className="text-[11px]" />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Primary CTA */}
-                  <Button type="submit" className="w-full mt-2 shadow-[0_12px_32px_-4px_rgba(67,82,165,0.2)]" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Cargando..." : "Crear cuenta"}
-                  </Button>
-                </form>
-              </Form>
-
-              {/* Divider */}
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-outline-variant/20"></div>
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase font-label tracking-widest text-on-surface-variant/40">
-                  <span className="bg-surface/80 backdrop-blur-md px-4">O continúa con</span>
-                </div>
-              </div>
-
-              {/* Social Logins */}
-              <div className="flex flex-col gap-4">
-                <Button type="button" variant="outline" className="group" onClick={handleGoogleLogin}>
-                  <svg className="w-4 h-4 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
-                  </svg>
-                  <span className="font-headline font-semibold text-xs text-on-surface">Continuar con Google</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Footer Links */}
-            <div className="mt-8 text-center">
-              <p className="font-label text-sm text-on-surface-variant">
-                  ¿Ya tienes cuenta? 
-                  <Link href="/login" className="font-bold text-primary ml-1 hover:underline underline-offset-4 decoration-primary/30">
-                    Inicia sesión
-                  </Link>
-              </p>
+                  {/* Social Logins */}
+                  <div className="flex flex-col gap-4">
+                    <Button type="button" variant="outline" className="group" onClick={handleGoogleLogin}>
+                      <svg className="w-4 h-4 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+                      </svg>
+                      <span className="font-headline font-semibold text-xs text-on-surface">Continuar con Google</span>
+                    </Button>
+                  </div>
+                  
+                  {/* Footer Links */}
+                  <div className="mt-8 text-center">
+                    <p className="font-label text-sm text-on-surface-variant">
+                        ¿Ya tienes cuenta? 
+                        <Link href="/login" className="font-bold text-primary ml-1 hover:underline underline-offset-4 decoration-primary/30">
+                          Inicia sesión
+                        </Link>
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -289,11 +276,11 @@ export default function RegisterPage() {
            </div>
         </div>
       </div>
-      
-      {/* Font Injection for Material Symbols */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,1,0');
-      `}} />
+
+        {/* Font Injection for Material Symbols */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,1,0');
+        `}} />
     </main>
   );
 }

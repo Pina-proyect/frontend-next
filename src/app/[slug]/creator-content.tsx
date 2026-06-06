@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Wallet } from "@mercadopago/sdk-react";
 import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -27,20 +28,21 @@ export default function CreatorContent({ packs: initialPacks, creatorSlug }: { p
   const [packs, setPacks] = useState(initialPacks);
   const [purchasedPacks, setPurchasedPacks] = useState<string[]>([]);
   const [buying, setBuying] = useState<string | null>(null);
+  const [checkoutPackId, setCheckoutPackId] = useState<string | null>(null);
+  const [checkoutPreferenceId, setCheckoutPreferenceId] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const handleRealPurchase = async (packId: string) => {
     setBuying(packId);
     try {
-      // Solicitar preferencia de pago a nuestro backend
-      const response = await http<{ init_point: string }>("/payments/create-preference", {
+      const response = await http<{ id: string; init_point: string }>("/payments/create-preference", {
         method: "POST",
         body: JSON.stringify({ packId }),
       });
       
-      // Redirigir al usuario al Checkout Pro de MercadoPago
-      if (response.init_point) {
-        window.location.href = response.init_point;
+      if (response.id) {
+        setCheckoutPackId(packId);
+        setCheckoutPreferenceId(response.id);
       }
     } catch (error) {
       toast({ 
@@ -130,6 +132,16 @@ export default function CreatorContent({ packs: initialPacks, creatorSlug }: { p
                         <span className="material-symbols-outlined mr-2">check_circle</span>
                         Desbloqueado
                       </Button>
+                    ) : checkoutPackId === pack.id && checkoutPreferenceId ? (
+                      <div className="flex flex-col gap-2 items-end">
+                        <Wallet initialization={{ preferenceId: checkoutPreferenceId }} />
+                        <button
+                          onClick={() => { setCheckoutPackId(null); setCheckoutPreferenceId(null); }}
+                          className="text-xs text-on-surface-variant hover:text-on-surface underline"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     ) : (
                       <Button 
                         onClick={() => handleRealPurchase(pack.id)}

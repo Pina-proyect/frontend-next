@@ -97,7 +97,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="font-headline text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface">
-            ¡Hola, {user?.fullName?.split(" ")[0]}!
+            ¡Hola{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""}!
           </h2>
           <p className="text-on-surface-variant font-body mt-1 text-sm md:text-base">
             Bienvenid{user?.gender?.toLowerCase() === "creador" ? "o" : "a"} al panel de control de tu Estudio como <span className="text-primary font-bold">{getGenderedNiche(user?.gender || "creadora", user?.niche || null)}</span>.
