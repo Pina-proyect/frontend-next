@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useAuthStore, clearAuthSession, type User } from "@/store/use-auth-store";
+import { useAuthStore, clearAuthSession, getAuthToken, type User } from "@/store/use-auth-store";
 import { useToast } from "@/components/ui/use-toast";
 import { http } from "@/lib/http-client";
 
@@ -111,19 +111,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   
   const storedUser = useAuthStore((s) => s.user);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const refreshToken = useAuthStore((s) => s.refreshToken);
   const [profile, setProfile] = useState<User | null>(storedUser);
   const [loading, setLoading] = useState(!storedUser);
   // Verificación de sesión
   useEffect(() => {
+    console.log("🔍 AppLayout - storedUser:", storedUser, "accessToken:", accessToken?.substring(0,20), "refreshToken:", !!refreshToken, "loading:", loading);
     let mounted = true;
     const verify = async () => {
+      console.log("🔍 AppLayout - verify() called, token from store:", getAuthToken()?.substring(0,20));
       try {
         const me = await http<User>("/auth/me");
         if (mounted) {
+          console.log("🔍 AppLayout - verify() succeded, user:", me.email);
           setProfile(me);
           setLoading(false);
         }
       } catch (error) {
+        console.error("🔍 AppLayout - verify() FAILED:", error);
         if (mounted) {
           toast({ variant: "destructive", title: "Aviso", description: "Tu sesión ha expirado" });
           router.replace("/login");
@@ -138,7 +144,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
     
     return () => { mounted = false; };
-  }, [storedUser, router, toast]);
+  }, [storedUser, accessToken, refreshToken, router, toast]);
 
   const handleLogout = () => {
     clearAuthSession();
