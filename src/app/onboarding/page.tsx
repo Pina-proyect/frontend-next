@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 import { useOnboardingStore } from "@/store/use-onboarding-store";
 import { http } from "@/lib/http-client";
-import { getAuthToken, type User } from "@/store/use-auth-store";
+import { getAuthToken, updateAuthUser, type User } from "@/store/use-auth-store";
 import { useToast } from "@/components/ui/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -140,19 +140,51 @@ const formSchemaProfile = z.object({
 });
 
 function Step2ProfileSetup() {
-  const { slug, bio, gender, country, profileImage, setProfileInfo, nextStep, prevStep } = useOnboardingStore();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { slug, bio, gender, country, profileImage, setProfileInfo, prevStep } = useOnboardingStore();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(profileImage);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<z.infer<typeof formSchemaProfile>>({
     resolver: zodResolver(formSchemaProfile),
     defaultValues: { slug, bio, gender, country },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchemaProfile>) => {
+  const onSubmit = async (values: z.infer<typeof formSchemaProfile>) => {
     const formattedSlug = values.slug.toLowerCase().trim().replace(/\s+/g, "-");
     setProfileInfo(formattedSlug, values.bio || "", values.gender, values.country || "", imagePreview);
-    nextStep();
+
+    setIsSubmitting(true);
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        toast({ variant: "destructive", title: "Error", description: "No autenticado" });
+        router.push("/login");
+        return;
+      }
+
+      const updatedUser = await http<User>("/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          slug: formattedSlug,
+          bio: values.bio || "",
+          niche: useOnboardingStore.getState().niche,
+          gender: values.gender,
+          country: values.country || "",
+          profileImageBase64: imagePreview,
+        }),
+      });
+      updateAuthUser(updatedUser);
+
+      router.push("/dashboard");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al guardar tu perfil";
+      toast({ variant: "destructive", title: "Oops!", description: message });
+      setIsSubmitting(false);
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,8 +334,8 @@ function Step2ProfileSetup() {
 
             {/* CTA */}
             <div className="pt-6 flex flex-col sm:flex-row items-center gap-4">
-                <button type="submit" className="w-full sm:w-auto px-10 py-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-white font-headline font-bold text-sm tracking-wide shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] hover:opacity-90 active:scale-95 transition-all">
-                    Ya casi estamos
+                <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-10 py-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-white font-headline font-bold text-sm tracking-wide shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none">
+                    {isSubmitting ? "Guardando..." : "Ya casi estamos"}
                 </button>
                 <button type="button" onClick={prevStep} className="w-full sm:w-auto px-8 py-4 text-on-surface-variant font-medium text-sm hover:text-on-surface transition-colors">
                     Atrás
@@ -336,7 +368,7 @@ function Step3ConnectSocials() {
         return;
       }
 
-      await http<User>("/auth/profile", {
+      const updatedUser = await http<User>("/auth/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ 
@@ -351,6 +383,7 @@ function Step3ConnectSocials() {
           youtube: connectedSocials.youtube
         }),
       });
+      updateAuthUser(updatedUser);
 
       setShowAnimation(true);
       setTimeout(() => {
