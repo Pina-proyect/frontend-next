@@ -44,7 +44,7 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
     let mounted = true;
     const fetchDonations = async () => {
       try {
-        const data = await http<Donation[]>(`/donations/public/${creatorId}`);
+        const data = await http<Donation[]>(`/creators/${creatorId}/donations`);
         if (mounted) {
           setDonations(data || []);
         }
@@ -88,7 +88,7 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
     setIsSubmitting(true);
 
     try {
-      const response = await http<{ id: string; init_point: string }>("/donations/preference", {
+      const response = await http<{ id: string; init_point: string }>("/payments/pinas", {
         method: "POST",
         body: JSON.stringify({
           creatorId,

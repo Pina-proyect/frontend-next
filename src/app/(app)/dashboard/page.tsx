@@ -47,7 +47,7 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       try {
         const [donationsData, mediaData, packsData] = await Promise.all([
-          http<Donation[]>(`/donations/public/${user.id}`).catch(() => []),
+          http<Donation[]>(`/creators/${user.id}/donations`).catch(() => []),
           http<any[]>("/media/my-content").catch(() => []),
           http<any[]>("/packs/my-packs").catch(() => [])
         ]);
