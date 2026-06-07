@@ -9,7 +9,10 @@ const nextConfig: NextConfig = {
     // Importante: si BACKEND_URL no está definido, el uso de concatenación
     // puede producir "undefined/..." y romper la configuración.
     // Usamos un fallback seguro y explícito.
-    const backend = process.env.BACKEND_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+    const backend = process.env.BACKEND_URL?.replace(/\/$/, "")
+      ?? (process.env.NODE_ENV === "production"
+        ? "https://pina-backend-bii9.onrender.com"
+        : "http://localhost:3000");
     return [
       {
         source: "/api/pina/:path*",
