@@ -22,7 +22,7 @@ interface OnboardingState {
 }
 
 export const useOnboardingStore = create<OnboardingState>((set) => ({
-  currentStep: 1, // Steps 1 to 3
+  currentStep: 1, // Steps 1 to 2 (Step 3: ConnectSocials extraído del stepper, ver #30)
   niche: "",
   slug: "",
   bio: "",
@@ -34,9 +34,9 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
     youtube: false,
     tiktok: false,
   },
-  
+
   setStep: (step) => set({ currentStep: step }),
-  nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 3) })),
+  nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, 2) })),
   prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
   
   setNiche: (niche) => set({ niche }),

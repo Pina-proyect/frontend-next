@@ -349,7 +349,17 @@ function Step2ProfileSetup() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                   STEP 3: SOCIALS                          */
+/*                       STEP 3: SOCIALS (PRESERVED — ver #30)                */
+/* -------------------------------------------------------------------------- */
+/* Este componente se conserva en el código pero fue extraído del stepper     */
+/* del onboarding por decisión de producto (issue #30).                       */
+/*                                                                            */
+/* Estado: NO se muestra en el flujo actual de onboarding.                    */
+/* Futuro: se integrará en el dashboard o se re-sumará al onboarding cuando   */
+/*         exista el backend de conexiones OAuth (Instagram, TikTok, YouTube).*/
+/*                                                                            */
+/* El handler `handleLaunch` (PATCH /auth/profile + updateAuthUser +          */
+/* redirect a /dashboard) está intacto y es reusable.                         */
 /* -------------------------------------------------------------------------- */
 function Step3ConnectSocials() {
   const router = useRouter();
@@ -553,9 +563,8 @@ export default function OnboardingPage() {
             <div className="flex items-center gap-2">
                 <div className={`w-8 h-1.5 rounded-full transition-colors duration-500 delay-100 ${currentStep >= 1 ? "bg-gradient-to-br from-primary to-primary-container" : "bg-surface-container-highest"}`}></div>
                 <div className={`w-8 h-1.5 rounded-full transition-colors duration-500 delay-200 ${currentStep >= 2 ? "bg-gradient-to-br from-primary to-primary-container" : "bg-surface-container-highest"}`}></div>
-                <div className={`w-8 h-1.5 rounded-full transition-colors duration-500 delay-300 ${currentStep >= 3 ? "bg-gradient-to-br from-primary to-primary-container" : "bg-surface-container-highest"}`}></div>
             </div>
-            <span className="text-[0.75rem] font-semibold text-primary tracking-wider uppercase ml-2 hidden sm:block">Paso {currentStep} de 3</span>
+            <span className="text-[0.75rem] font-semibold text-primary tracking-wider uppercase ml-2 hidden sm:block">Paso {currentStep} de 2</span>
         </div>
         <div className="flex items-center gap-4">
         </div>
@@ -569,17 +578,10 @@ export default function OnboardingPage() {
         </>
       )}
 
-      {currentStep === 3 && (
-        <>
-            <div className="fixed -bottom-24 -left-24 w-96 h-96 bg-primary/5 rounded-full blur-[100px] pointer-events-none z-0"></div>
-            <div className="fixed top-1/4 -right-24 w-64 h-64 bg-primary-container/5 rounded-full blur-[80px] pointer-events-none z-0"></div>
-        </>
-      )}
-
       {/* Main Content Area */}
       <main className="min-h-screen pt-32 pb-16 px-6 flex flex-col items-center">
         {currentStep === 1 && <Step1ChooseNiche />}
-        
+
         {/* Step 2 uses a split layout */}
         {currentStep === 2 && (
             <div className="fixed inset-0 pt-20 flex z-10 w-full animate-in fade-in duration-500">
@@ -603,8 +605,6 @@ export default function OnboardingPage() {
                 </div>
             </div>
         )}
-
-        {currentStep === 3 && <Step3ConnectSocials />}
       </main>
       
       {/* Font Injection for Material Symbols */}
