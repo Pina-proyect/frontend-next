@@ -98,4 +98,5 @@ export const setAuthSession = (data: {
   refreshToken: string;
   user: User;
 }) => useAuthStoreBase.getState().setSession(data);
+export const updateAuthUser = (user: User) => useAuthStoreBase.setState({ user });
 export const clearAuthSession = () => useAuthStoreBase.getState().clearSession();

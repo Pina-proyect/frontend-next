@@ -90,26 +90,37 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
 
 async function handleRefreshToken(): Promise<{ accessToken: string } | null> {
   const refreshToken = getRefreshToken();
-  // Si está deshabilitado y no tenemos refreshToken explícito, no llamamos al backend
   if (DISABLE_REFRESH && !refreshToken) {
     return null;
   }
-  try {
-    // Si hay refreshToken en el store, lo enviamos en el body.
-    // Si no, intentamos refresh basado en cookie HttpOnly con credentials: 'include'.
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: "POST",
-      headers: refreshToken ? { "Content-Type": "application/json" } : undefined,
-      body: refreshToken ? JSON.stringify({ refreshToken }) : undefined,
-      credentials: "include",
-    });
 
-    if (!response.ok) throw new Error("Refresh token failed");
-
-    const data: RefreshResponse = await response.json();
-    setAuthSession(data);
-    return { accessToken: data.accessToken };
-  } catch {
-    return null;
+  // Intentamos refrescar con la URL principal (puede ser absoluta o relativa)
+  // Si falla y la URL principal es absoluta (cross-origin), reintentamos
+  // con el proxy relativo de Next.js para evitar problemas de CORS.
+  const urls = [`${API_BASE_URL}/auth/refresh`];
+  const isAbsolute = API_BASE_URL.startsWith("http");
+  if (isAbsolute) {
+    urls.push("/api/pina/auth/refresh");
   }
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: refreshToken ? { "Content-Type": "application/json" } : undefined,
+        body: refreshToken ? JSON.stringify({ refreshToken }) : undefined,
+        credentials: "include",
+      });
+
+      if (!response.ok) continue;
+
+      const data: RefreshResponse = await response.json();
+      setAuthSession(data);
+      return { accessToken: data.accessToken };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 }
