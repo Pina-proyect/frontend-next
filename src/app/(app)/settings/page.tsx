@@ -18,6 +18,15 @@ function SettingsContent() {
   const [loading, setLoading] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   
+  // Payment Settings State (cargado dinámicamente desde /creators/me/payment-settings)
+  const [paymentSettings, setPaymentSettings] = useState<{
+    isConnected: boolean;
+    provider: string;
+    accountName?: string;
+    accountEmail?: string;
+  } | null>(null);
+  const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
+  
   // Monetization State
   const [mpAccessToken, setMpAccessToken] = useState(user?.mpAccessToken || "");
   const [pinaPrice, setPinaPrice] = useState(user?.pinaPrice || 1000);
@@ -53,6 +62,28 @@ function SettingsContent() {
       });
     }
   }, [connectionStatus, toast, searchParams]);
+
+  // Cargar estado de pagos del creador cuando el tab de monetización está activo
+  useEffect(() => {
+    if (activeTab === "monetization" && user) {
+      const fetchPaymentSettings = async () => {
+        setLoadingPaymentSettings(true);
+        try {
+          const settings = await http<any>("/creators/me/payment-settings");
+          setPaymentSettings(settings);
+        } catch (err) {
+          console.error("Error fetching payment settings:", err);
+          setPaymentSettings({
+            isConnected: !!user?.mpAccessToken,
+            provider: "mercadopago",
+          });
+        } finally {
+          setLoadingPaymentSettings(false);
+        }
+      };
+      fetchPaymentSettings();
+    }
+  }, [activeTab, user, connectionStatus]);
 
   const handleSaveMonetization = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,16 +193,34 @@ function SettingsContent() {
     }
   };
 
-  const handleConnectMp = () => {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
-    window.location.href = `${backendUrl}/payments/mercadopago/auth?creatorId=${user?.id}`;
+  const handleConnectMp = async () => {
+    try {
+      const response = await http<{ url: string }>("/creators/me/mp/connect", {
+        method: "POST",
+      });
+      if (response.url) {
+        window.location.href = response.url;
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "No se pudo iniciar la conexión con Mercado Pago.",
+      });
+    }
   };
 
   const handleDisconnectMp = async () => {
     setDisconnecting(true);
     try {
-      await http<any>("/payments/mercadopago/disconnect", {
+      await http<any>("/creators/me/mp/disconnect", {
         method: "POST",
+      });
+
+      // Actualizar estado local de payment settings
+      setPaymentSettings({
+        isConnected: false,
+        provider: "mercadopago",
       });
 
       // Limpiamos los tokens locales del store
@@ -234,14 +283,24 @@ function SettingsContent() {
               </div>
 
               {/* Estado de Conexión de Cuenta */}
-              {user?.mpAccessToken ? (
+              {loadingPaymentSettings ? (
+                <div className="p-6 bg-surface-container-low rounded-2xl flex items-center justify-center gap-3 mb-6">
+                  <span className="material-symbols-outlined text-primary animate-spin">progress_activity</span>
+                  <p className="text-sm text-on-surface-variant font-medium">Verificando conexión con Mercado Pago...</p>
+                </div>
+              ) : paymentSettings?.isConnected ? (
                 <div className="p-4 bg-green-500/10 rounded-2xl flex items-center justify-between border-none mb-6">
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-green-500" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     <div>
-                      <p className="text-sm font-bold text-on-surface">Cuenta vinculada con éxito</p>
+                      <p className="text-sm font-bold text-on-surface">Mercado Pago – Conectado</p>
                       <p className="text-xs text-on-surface-variant font-medium">
-                        Tus donaciones se acreditarán directamente. Clave pública: {user.mpPublicKey || "Enlazada"}
+                        {paymentSettings.accountName && (
+                          <span className="block">{paymentSettings.accountName}</span>
+                        )}
+                        {paymentSettings.accountEmail && (
+                          <span className="block text-on-surface-variant/70">{paymentSettings.accountEmail}</span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -249,7 +308,7 @@ function SettingsContent() {
                     type="button"
                     onClick={handleDisconnectMp}
                     disabled={disconnecting}
-                    className="text-xs font-headline font-bold text-error hover:underline"
+                    className="text-xs font-headline font-bold text-error hover:underline disabled:opacity-50"
                   >
                     {disconnecting ? "Desvinculando..." : "Desvincular"}
                   </button>
