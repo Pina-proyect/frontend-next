@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Wallet } from "@mercadopago/sdk-react";
 import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
   const [donorName, setDonorName] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [donationPreferenceId, setDonationPreferenceId] = useState<string | null>(null);
 
   // Donations List State
   const [donations, setDonations] = useState<Donation[]>([]);
@@ -98,9 +96,9 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
         }),
       });
 
-      if (response && response.id) {
-        setDonationPreferenceId(response.id);
-        setIsSubmitting(false);
+      if (response && response.init_point) {
+        // Redirigir directamente al checkout de Mercado Pago
+        window.location.href = response.init_point;
       } else {
         throw new Error("No se pudo generar la preferencia de pago.");
       }
@@ -219,39 +217,21 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
               </span>
             </div>
 
-            {donationPreferenceId ? (
-              <div className="space-y-2">
-                <div className="flex justify-center">
-                  <Wallet initialization={{ preferenceId: donationPreferenceId }} />
-                </div>
-                <div className="text-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDonationPreferenceId(null)}
-                    className="rounded-xl text-xs"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
+            {isSubmitting ? (
+              <button
+                disabled
+                className="w-full bg-gradient-to-br from-primary to-primary-container text-white py-4 rounded-2xl font-headline font-bold text-sm shadow-[0_12px_32px_-4px_rgba(67,82,165,0.2)] opacity-75 flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+                <span>Conectando con Mercado Pago...</span>
+              </button>
             ) : (
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-br from-primary to-primary-container text-white py-4 rounded-2xl font-headline font-bold text-sm shadow-[0_12px_32px_-4px_rgba(67,82,165,0.2)] hover:shadow-[0_12px_32px_-4px_rgba(67,82,165,0.3)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:hover:scale-100"
+                className="w-full bg-gradient-to-br from-primary to-primary-container text-white py-4 rounded-2xl font-headline font-bold text-sm shadow-[0_12px_32px_-4px_rgba(67,82,165,0.2)] hover:shadow-[0_12px_32px_-4px_rgba(67,82,165,0.3)] hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                {isSubmitting ? (
-                  <>
-                    <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                    <span>Conectando con Mercado Pago...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-sm">favorite</span>
-                    <span>Enviar {quantity} Pina(s)</span>
-                  </>
-                )}
+                <span className="material-symbols-outlined text-sm">favorite</span>
+                <span>Enviar {quantity} Pina(s)</span>
               </button>
             )}
           </div>

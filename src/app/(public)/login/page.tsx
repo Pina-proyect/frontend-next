@@ -49,7 +49,6 @@ export default function LoginPage() {
       toast({
         title: "Sesión expirada",
         description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
-        duration: 7000,
       });
       // Limpiar el query param para que no se muestre de nuevo si recargan
       window.history.replaceState({}, '', '/login');
