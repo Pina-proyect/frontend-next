@@ -42,6 +42,20 @@ export default function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     const detail = params.get("detail");
+    const expired = params.get("expired");
+    
+    // Mostrar mensaje de sesión expirada
+    if (expired === "true") {
+      toast({
+        title: "Sesión expirada",
+        description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+        duration: 7000,
+      });
+      // Limpiar el query param para que no se muestre de nuevo si recargan
+      window.history.replaceState({}, '', '/login');
+    }
+    
+    // Manejo de errores existentes
     if (error === "fetch_user_failed" && detail) {
       toast({
         variant: "destructive",
@@ -78,7 +92,13 @@ export default function LoginPage() {
       setAuthSession(response)
       document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
       
-      if (response.user?.role === "CONSUMER") {
+      // Verificar si hay URL de retorno guardada
+      const redirectUrl = localStorage.getItem('redirect_after_login');
+      localStorage.removeItem('redirect_after_login');
+      
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else if (response.user?.role === "CONSUMER") {
         router.push("/explore")
       } else {
         const hasSlug = !!response.user?.slug?.trim()
@@ -101,6 +121,14 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "/api/pina"
+    
+    // Guardar URL de retorno antes de redirigir a Google
+    const redirectUrl = localStorage.getItem('redirect_after_login');
+    if (redirectUrl) {
+      // Guardar en sessionStorage para después del callback de Google
+      sessionStorage.setItem('google_redirect_url', redirectUrl);
+    }
+    
     window.location.href = `${backendUrl}/auth/google`
   }
 

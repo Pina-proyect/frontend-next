@@ -63,7 +63,12 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
       // Refresh falló: limpiamos sesión y redirigimos a login
       clearAuthSession();
       if (typeof window !== "undefined") {
-        token = getAuthToken();
+        // Guardar URL actual para retorno después del login
+        const currentPath = window.location.pathname + window.location.search;
+        localStorage.setItem('redirect_after_login', currentPath);
+        
+        // Redirigir al login con indicador de sesión expirada
+        window.location.href = '/login?expired=true';
       }
       throw new Error("Sesión expirada");
     }

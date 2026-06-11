@@ -30,8 +30,18 @@ function AuthCallbackContent() {
         setAuthSession({ accessToken: access, refreshToken: refresh, user });
         document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
         toast({ title: "Autenticación exitosa", description: "Has iniciado sesión correctamente" });
-        const hasSlug = !!user?.slug?.trim();
-        router.push(hasSlug ? "/dashboard" : "/onboarding");
+        
+        // Verificar si hay URL de retorno guardada (de sesión expirada)
+        const redirectUrl = sessionStorage.getItem('google_redirect_url') || localStorage.getItem('redirect_after_login');
+        sessionStorage.removeItem('google_redirect_url');
+        localStorage.removeItem('redirect_after_login');
+        
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else {
+          const hasSlug = !!user?.slug?.trim();
+          router.push(hasSlug ? "/dashboard" : "/onboarding");
+        }
       } catch (error) {
         const detail = error instanceof Error
           ? error.message.substring(0, 200)
@@ -58,9 +68,19 @@ function AuthCallbackContent() {
         setAuthSession(data);
         document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
         toast({ title: "Sesión restaurada", description: "Tu sesión fue recuperada correctamente" });
-        const me = await http<User>("/auth/me");
-        const hasSlug = !!me?.slug?.trim();
-        router.push(hasSlug ? "/dashboard" : "/onboarding");
+        
+        // Verificar si hay URL de retorno guardada (de sesión expirada)
+        const redirectUrl = sessionStorage.getItem('google_redirect_url') || localStorage.getItem('redirect_after_login');
+        sessionStorage.removeItem('google_redirect_url');
+        localStorage.removeItem('redirect_after_login');
+        
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else {
+          const me = await http<User>("/auth/me");
+          const hasSlug = !!me?.slug?.trim();
+          router.push(hasSlug ? "/dashboard" : "/onboarding");
+        }
       } catch (error) {
         toast({ variant: "destructive", title: "Autenticación fallida", description: "Intenta iniciar sesión nuevamente" });
         router.push("/login?error=auth_failed");
