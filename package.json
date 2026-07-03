@@ -31,6 +31,9 @@
     "zod": "^4.1.12",
     "zustand": "^5.0.8"
   },
+  "resolutions": {
+    "postcss": "^8.5.10"
+  },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
