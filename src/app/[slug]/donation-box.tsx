@@ -42,9 +42,9 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
     let mounted = true;
     const fetchDonations = async () => {
       try {
-        const data = await http<Donation[]>(`/creators/${creatorId}/donations`);
+        const data = await http<{ donations: Donation[]; meta: { totalPinas: number; totalDonors: number; pinaPrice: number } }>(`/donations/public/${creatorId}`);
         if (mounted) {
-          setDonations(data || []);
+          setDonations(data?.donations || []);
         }
       } catch (error) {
         console.error("Error al obtener donaciones públicas:", error);

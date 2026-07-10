@@ -48,6 +48,7 @@ interface PageProps {
 }
 
 import CreatorContent from "./creator-content";
+import FollowButton from "./follow-button";
 
 export default async function CreatorProfilePage({ params }: PageProps) {
   const { slug } = await params;
@@ -139,9 +140,7 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                 </div>
                 <p className="text-on-surface-variant text-lg font-medium">@{profile.slug}</p>
                 <div className="flex items-center justify-center md:justify-start gap-4 mt-6">
-                    <span className="bg-surface/50 text-on-surface-variant/60 px-8 py-3.5 rounded-xl font-headline font-bold text-sm italic select-none">
-                        Seguir Estudio
-                    </span>
+                    <FollowButton creatorId={profile.id} />
                     {profile.instagram || profile.tiktok || profile.youtube ? (
                         <span className="glass-panel border-outline-variant/20 px-8 py-3.5 rounded-xl font-headline font-bold text-sm text-on-surface-variant">
                             Disponible en redes

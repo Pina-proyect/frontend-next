@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuthStore, setAuthSession, getRefreshToken } from "@/store/use-auth-store";
 import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
@@ -26,6 +26,8 @@ function SettingsContent() {
     accountEmail?: string;
   } | null>(null);
   const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
+  const [sessions, setSessions] = useState<{ id: string; title: string; createdAt: string }[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
   
   // Monetization State
   const [mpAccessToken, setMpAccessToken] = useState(user?.mpAccessToken || "");
@@ -250,6 +252,21 @@ function SettingsContent() {
       setDisconnecting(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab !== "security") return;
+    let mounted = true;
+    setLoadingSessions(true);
+    const fetchSessions = async () => {
+      try {
+        const data = await http<any[]>("/users/sessions");
+        if (mounted) setSessions(data || []);
+      } catch { /* ignore */ }
+      finally { if (mounted) setLoadingSessions(false); }
+    };
+    fetchSessions();
+    return () => { mounted = false; };
+  }, [activeTab]);
 
   return (
     <div className="p-6 lg:p-10 max-w-screen-xl mx-auto w-full space-y-10 animate-in fade-in duration-500">
@@ -674,11 +691,36 @@ function SettingsContent() {
               <div className="pt-6 border-t border-outline-variant/10 space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm text-outline">devices</span>
-                  <h4 className="font-headline font-bold text-sm text-on-surface">Sesiones Activas</h4>
+                  <h4 className="font-headline font-bold text-sm text-on-surface">Sesiones Recientes</h4>
                 </div>
-                <p className="text-xs text-on-surface-variant/60 italic leading-relaxed">
-                  La gestión de sesiones activas estará disponible próximamente. Aquí podrás ver en qué dispositivos tienes sesión iniciada y cerrar sesiones de forma remota.
-                </p>
+                {loadingSessions ? (
+                  <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                    <span className="w-4 h-4 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                    Cargando sesiones...
+                  </div>
+                ) : sessions.length === 0 ? (
+                  <p className="text-xs text-on-surface-variant/60 italic leading-relaxed">
+                    No se encontraron sesiones registradas.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {sessions.map((s) => (
+                      <div key={s.id} className="bg-surface-container-low rounded-xl p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="material-symbols-outlined text-outline text-lg">devices</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-on-surface truncate">{s.title}</p>
+                            <p className="text-[10px] text-on-surface-variant/50">
+                              {new Date(s.createdAt).toLocaleDateString("es-ES", {
+                                day: "numeric", month: "short", year: "numeric",
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

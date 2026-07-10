@@ -115,6 +115,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const [profile, setProfile] = useState<User | null>(storedUser);
   const [loading, setLoading] = useState(!storedUser);
+  const [unreadCount, setUnreadCount] = useState(0);
   // Verificación de sesión
   useEffect(() => {
     let mounted = true;
@@ -141,6 +142,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     
     return () => { mounted = false; };
   }, [storedUser, accessToken, refreshToken, router, toast]);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!profile) return;
+    let mounted = true;
+    const fetchUnread = async () => {
+      try {
+        const data = await http<{ count: number }>("/notifications/unread-count");
+        if (mounted) setUnreadCount(data.count);
+      } catch { /* ignore */ }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => { mounted = false; clearInterval(interval); };
+  }, [profile]);
 
   const handleLogout = () => {
     clearAuthSession();
@@ -228,9 +244,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 className="relative w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
               >
                 <span className="material-symbols-outlined text-2xl">notifications</span>
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error text-[9px] font-bold text-white rounded-full flex items-center justify-center shadow-sm">
-                  0
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error text-[9px] font-bold text-white rounded-full flex items-center justify-center shadow-sm">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
 
               {/* Profile Snippet */}

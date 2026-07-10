@@ -5,6 +5,7 @@ import { Wallet } from "@mercadopago/sdk-react";
 import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import CommentsSection from "./comments-section";
 
 interface Media {
   id: string;
@@ -31,6 +32,7 @@ export default function CreatorContent({ packs: initialPacks, creatorSlug }: { p
   const [checkoutPackId, setCheckoutPackId] = useState<string | null>(null);
   const [checkoutPreferenceId, setCheckoutPreferenceId] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState<string | null>(null);
 
   const handleRealPurchase = async (packId: string) => {
     setBuying(packId);
@@ -150,6 +152,22 @@ export default function CreatorContent({ packs: initialPacks, creatorSlug }: { p
                       >
                         {buying === pack.id ? "Procesando..." : "Liberar Pack"}
                       </Button>
+                    )}
+                  </div>
+
+                  {/* Comments toggle */}
+                  <div className="border-t border-outline-variant/10 pt-3">
+                    <button
+                      onClick={() => setCommentsOpen(commentsOpen === pack.id ? null : pack.id)}
+                      className="flex items-center gap-2 text-xs text-on-surface-variant hover:text-on-surface transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">chat</span>
+                      {commentsOpen === pack.id ? "Ocultar comentarios" : "Comentarios"}
+                    </button>
+                    {commentsOpen === pack.id && (
+                      <div className="mt-4">
+                        <CommentsSection packId={pack.id} />
+                      </div>
                     )}
                   </div>
                 </div>
