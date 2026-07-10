@@ -669,6 +669,17 @@ function SettingsContent() {
                   </button>
                 </div>
               </form>
+
+              {/* Sesiones Activas (FE-18) */}
+              <div className="pt-6 border-t border-outline-variant/10 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm text-outline">devices</span>
+                  <h4 className="font-headline font-bold text-sm text-on-surface">Sesiones Activas</h4>
+                </div>
+                <p className="text-xs text-on-surface-variant/60 italic leading-relaxed">
+                  La gestión de sesiones activas estará disponible próximamente. Aquí podrás ver en qué dispositivos tienes sesión iniciada y cerrar sesiones de forma remota.
+                </p>
+              </div>
             </div>
           )}
 

@@ -220,10 +220,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <input className="w-full bg-surface-container-high border-none rounded-xl pl-10 pr-4 py-2 text-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-200 outline-none" placeholder="Buscar creadores, contenido o estadísticas..." type="text"/>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               
+              {/* Notification Bell */}
+              <Link
+                href="/notifications"
+                className="relative w-10 h-10 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+              >
+                <span className="material-symbols-outlined text-2xl">notifications</span>
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error text-[9px] font-bold text-white rounded-full flex items-center justify-center shadow-sm">
+                  0
+                </span>
+              </Link>
+
               {/* Profile Snippet */}
-              {/* Profile Snippet (Informativo y Estático) */}
               <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-bold text-on-surface leading-none truncate max-w-[120px]">{profile?.fullName}</p>

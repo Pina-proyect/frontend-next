@@ -31,18 +31,7 @@ const formSchema = z.object({
     .refine((val) => /[A-Z]/.test(val), { message: "Incluye al menos una letra mayúscula" })
     .refine((val) => /[a-z]/.test(val), { message: "Incluye al menos una letra minúscula" })
     .refine((val) => /[0-9]/.test(val), { message: "Incluye al menos un número" }),
-  birthDate: z.string().refine((val) => {
-    if (!val) return false;
-    const date = new Date(val);
-    if (isNaN(date.getTime())) return false;
-    const now = new Date();
-    const age = now.getFullYear() - date.getFullYear();
-    const hasBirthdayPassed =
-      now.getMonth() > date.getMonth() ||
-      (now.getMonth() === date.getMonth() && now.getDate() >= date.getDate());
-    const realAge = hasBirthdayPassed ? age : age - 1;
-    return realAge >= 18;
-  }, { message: "Debes ser mayor de 18 años" }),
+  acknowledgedAge: z.boolean().refine((val) => val === true, { message: "Debes confirmar que eres mayor de 18 años" }),
 });
 
 interface KycResponse {
@@ -58,7 +47,7 @@ export default function RegisterPage() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: "", fullName: "", password: "", birthDate: "" },
+    defaultValues: { email: "", fullName: "", password: "", acknowledgedAge: false },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -67,7 +56,8 @@ export default function RegisterPage() {
         email: values.email,
         fullName: values.fullName,
         password: values.password,
-        birthDate: values.birthDate,
+        birthDate: "2000-01-01",
+        acknowledgedAge: true,
         role: "CREATOR",
       };
 
@@ -148,7 +138,7 @@ export default function RegisterPage() {
 
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="grid grid-cols-1 gap-5">
                         {/* Full Name Field */}
                         <FormField
                           control={form.control}
@@ -166,19 +156,31 @@ export default function RegisterPage() {
                           )}
                         />
 
-                        {/* Birth Date Field */}
+                        {/* Age Gate: Checkbox 18+ */}
                         <FormField
                           control={form.control}
-                          name="birthDate"
+                          name="acknowledgedAge"
                           render={({ field }) => (
-                            <FormItem className="space-y-2">
-                              <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase ml-1">
-                                Fecha de Nac.
-                              </FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                              <FormMessage className="text-[11px]" />
+                            <FormItem>
+                              <label className="flex flex-row items-start gap-3 p-4 bg-surface-container-low rounded-xl cursor-pointer">
+                                <FormControl>
+                                  <input
+                                    type="checkbox"
+                                    checked={field.value as boolean}
+                                    onChange={field.onChange}
+                                    className="mt-0.5 w-5 h-5 rounded-lg border-2 border-outline/40 bg-surface-container-highest text-primary focus:ring-2 focus:ring-primary/30 focus:ring-offset-1 focus:ring-offset-surface-container-low transition-all accent-primary"
+                                  />
+                                </FormControl>
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-headline font-bold text-sm text-on-surface leading-tight">
+                                    Soy mayor de 18 años
+                                  </span>
+                                  <p className="text-[11px] text-on-surface-variant/60">
+                                    Al marcar esta casilla confirmas que eres mayor de edad.
+                                  </p>
+                                </div>
+                              </label>
+                              <FormMessage className="text-[11px] mt-2" />
                             </FormItem>
                           )}
                         />

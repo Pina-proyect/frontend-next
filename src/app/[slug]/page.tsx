@@ -93,7 +93,18 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                 <span>Explorar</span>
             </Link>
             <div className="flex gap-4">
-                <button className="glass-panel p-2 rounded-full hover:bg-white/20 transition-colors">
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(window.location.href);
+                      alert("¡Enlace copiado al portapapeles!");
+                    } catch {
+                      // Fallback
+                    }
+                  }}
+                  className="glass-panel p-2 rounded-full hover:bg-white/20 transition-colors"
+                  title="Compartir perfil"
+                >
                     <span className="material-symbols-outlined text-xl">share</span>
                 </button>
             </div>
@@ -128,8 +139,8 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                 </div>
                 <p className="text-on-surface-variant text-lg font-medium">@{profile.slug}</p>
                 <div className="flex items-center justify-center md:justify-start gap-4 mt-6">
-                    <span className="bg-surface/50 text-on-surface-variant px-8 py-3.5 rounded-xl font-headline font-bold text-sm">
-                        Siguiendo
+                    <span className="bg-surface/50 text-on-surface-variant/60 px-8 py-3.5 rounded-xl font-headline font-bold text-sm italic select-none">
+                        Seguir Estudio
                     </span>
                     {profile.instagram || profile.tiktok || profile.youtube ? (
                         <span className="glass-panel border-outline-variant/20 px-8 py-3.5 rounded-xl font-headline font-bold text-sm text-on-surface-variant">
@@ -172,7 +183,12 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                     <h3 className="font-headline text-[10px] font-bold uppercase tracking-widest text-primary mb-6">Presencia Digital</h3>
                     <div className="grid grid-cols-1 gap-4">
                         {profile.instagram && (
-                            <Link href="#" className="flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-colors group">
+                            <Link
+                              href="https://instagram.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-colors group"
+                            >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#f09433] to-[#bc1888] flex items-center justify-center text-white">
                                         <span className="material-symbols-outlined text-xl">camera</span>
@@ -183,7 +199,12 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                             </Link>
                         )}
                         {profile.tiktok && (
-                            <Link href="#" className="flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-colors group">
+                            <Link
+                              href="https://tiktok.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-colors group"
+                            >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white">
                                         <span className="material-symbols-outlined text-xl">music_note</span>
@@ -194,7 +215,12 @@ export default async function CreatorProfilePage({ params }: PageProps) {
                             </Link>
                         )}
                         {profile.youtube && (
-                            <Link href="#" className="flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-colors group">
+                            <Link
+                              href="https://youtube.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high rounded-2xl transition-colors group"
+                            >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-[#FF0000] flex items-center justify-center text-white">
                                         <span className="material-symbols-outlined text-xl">smart_display</span>
