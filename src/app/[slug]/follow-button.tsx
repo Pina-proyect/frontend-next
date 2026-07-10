@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { http } from "@/lib/http-client";
 import { useAuthStore } from "@/store/use-auth-store";
 
@@ -12,16 +12,20 @@ export default function FollowButton({ creatorId }: FollowButtonProps) {
   const user = useAuthStore((s) => s.user);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    const check = async () => {
+    if (!user) { setChecking(false); return; }
+    let mounted = true;
+    const checkStatus = async () => {
       try {
-        const data = await http<{ count: number }>(`/creators/${creatorId}/followers-count`);
-        // Simple heuristic: if we can reach the API, the creator exists
+        const data = await http<{ isFollowing: boolean }>(`/creators/${creatorId}/follow-status`);
+        if (mounted) setIsFollowing(data.isFollowing);
       } catch { /* ignore */ }
+      finally { if (mounted) setChecking(false); }
     };
-    check();
+    checkStatus();
+    return () => { mounted = false; };
   }, [creatorId, user]);
 
   const handleToggle = async () => {
@@ -50,6 +54,15 @@ export default function FollowButton({ creatorId }: FollowButtonProps) {
       >
         Seguir Estudio
       </button>
+    );
+  }
+
+  if (checking) {
+    return (
+      <span className="bg-surface/50 text-on-surface-variant/60 px-8 py-3.5 rounded-xl font-headline font-bold text-sm italic">
+        <span className="material-symbols-outlined animate-spin text-sm align-middle mr-2">progress_activity</span>
+        Cargando...
+      </span>
     );
   }
 
