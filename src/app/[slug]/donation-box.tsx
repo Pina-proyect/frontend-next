@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/use-auth-store";
 
 interface Donation {
   id: string;
@@ -25,6 +25,7 @@ interface DonationBoxProps {
 
 export default function DonationBox({ creatorId, creatorName, pinaPrice }: DonationBoxProps) {
   const { toast } = useToast();
+  const user = useAuthStore((s) => s.user);
   
   // Form State
   const [quantity, setQuantity] = useState<number>(3); // 3 por defecto
@@ -42,9 +43,9 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
     let mounted = true;
     const fetchDonations = async () => {
       try {
-        const data = await http<{ donations: Donation[]; meta: { totalPinas: number; totalDonors: number; pinaPrice: number } }>(`/donations/public/${creatorId}`);
+        const data = await http<Donation[]>(`/creators/${creatorId}/donations`);
         if (mounted) {
-          setDonations(data?.donations || []);
+          setDonations(data || []);
         }
       } catch (error) {
         console.error("Error al obtener donaciones públicas:", error);
@@ -93,6 +94,7 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
           quantity,
           message: message.trim() || undefined,
           donorName: donorName.trim() || undefined,
+          donorId: user?.id || undefined,
         }),
       });
 
