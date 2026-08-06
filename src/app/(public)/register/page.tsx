@@ -20,7 +20,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
 import { http } from "@/lib/http-client";
-import { setAuthSession, type User } from "@/store/use-auth-store";
 
 const formSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.string().email({ message: "Email inválido" })),
@@ -43,7 +42,7 @@ interface KycResponse {
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [showNextSteps, setShowNextSteps] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,25 +60,32 @@ export default function RegisterPage() {
         role: "CREATOR",
       };
 
-      const response = await http<KycResponse>("/registro/creadora", {
+      await http<KycResponse>("/registro/creadora", {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
-      // Auto-login
-      const loginResponse = await http<{ accessToken: string; refreshToken: string; user: User }>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email: values.email, password: values.password }),
-      });
-      setAuthSession(loginResponse);
-
-      setShowNextSteps(true);
+      // No hacemos auto-login porque emailVerified es false.
+      setRegisteredEmail(values.email);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error al registrar";
       const isEmailTaken = /409|EMAIL_TAKEN|ya registrado/i.test(message);
       toast({ variant: isEmailTaken ? "warning" : "destructive", title: isEmailTaken ? "Email ya registrado" : "Registro fallido", description: message });
     }
   }
+
+  const handleResendVerification = async () => {
+    if (!registeredEmail) return;
+    try {
+      await http("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email: registeredEmail }),
+      });
+      toast({ title: "Email reenviado", description: "Revisa tu bandeja de entrada." });
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "No se pudo reenviar el email." });
+    }
+  };
 
   const handleGoogleLogin = () => {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "/api/pina";
@@ -111,21 +117,21 @@ export default function RegisterPage() {
 
             {/* Glassmorphism Card */}
             <div className="glass-panel rounded-[12px] p-8 sm:p-10 shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] ring-1 ring-outline-variant/15">
-              {showNextSteps ? (
+              {registeredEmail ? (
                 <div className="fade-in animate-in slide-in-from-bottom-4 duration-500">
                   <header className="mb-8 text-center">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-                      <span className="material-symbols-outlined text-4xl" style={{fontVariationSettings: "'FILL' 1"}}>check_circle</span>
+                      <span className="material-symbols-outlined text-4xl" style={{fontVariationSettings: "'FILL' 1"}}>mark_email_unread</span>
                     </div>
-                    <h1 className="font-headline font-bold text-3xl tracking-tight text-on-surface mb-2">¡Cuenta creada con éxito!</h1>
-                    <p className="text-on-surface-variant font-body text-sm">Elige cómo quieres continuar tu experiencia en Pina.</p>
+                    <h1 className="font-headline font-bold text-3xl tracking-tight text-on-surface mb-2">¡Cuenta creada!</h1>
+                    <p className="text-on-surface-variant font-body text-sm">Te enviamos un email de verificación. Revisá tu correo y hacé clic en el enlace para activar tu cuenta.</p>
                   </header>
                   <div className="flex flex-col gap-4">
-                    <Button onClick={() => router.push("/onboarding")} className="w-full py-6 text-sm font-headline shadow-md">
-                      Configurar mi Estudio Público
+                    <Button onClick={handleResendVerification} variant="outline" className="w-full py-6 text-sm font-headline">
+                      Reenviar email de verificación
                     </Button>
-                    <Button onClick={() => router.push("/dashboard")} variant="outline" className="w-full py-6 text-sm font-headline border-primary/20 hover:bg-primary/5 text-primary">
-                      Ir directo al Panel de Control
+                    <Button onClick={() => router.push("/login")} className="w-full py-6 text-sm font-headline shadow-md">
+                      Ir a iniciar sesión
                     </Button>
                   </div>
                 </div>

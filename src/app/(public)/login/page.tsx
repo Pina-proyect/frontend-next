@@ -89,6 +89,7 @@ export default function LoginPage() {
         body: JSON.stringify(values),
       })
       setAuthSession(response)
+      // eslint-disable-next-line react-hooks/immutability
       document.cookie = "auth_session=true; path=/; max-age=604800; SameSite=Lax; Secure";
       
       // Verificar si hay URL de retorno guardada
@@ -104,7 +105,7 @@ export default function LoginPage() {
         router.push(hasSlug ? "/dashboard" : "/onboarding")
       }
     } catch (error: unknown) {
-      const code = (error as any)?.code
+      const code = error instanceof Error && "code" in error ? (error as { code?: string }).code : undefined
       const message = error instanceof Error ? error.message : ""
       if (code === "EMAIL_NOT_VERIFIED") {
         setEmailNotVerified(values.email)
@@ -192,7 +193,7 @@ export default function LoginPage() {
                           <FormLabel className="block font-label text-[11px] font-semibold text-on-surface-variant tracking-wider uppercase">
                             Contraseña
                           </FormLabel>
-                          <Link href="#" className="font-label text-[11px] font-medium text-primary hover:text-primary-container transition-colors">
+                          <Link href="/forgot-password" className="font-label text-[11px] font-medium text-primary hover:text-primary-container transition-colors">
                             ¿Olvidaste tu contraseña?
                           </Link>
                         </div>
@@ -210,7 +211,7 @@ export default function LoginPage() {
                   {emailNotVerified && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                       <p className="font-semibold mb-1">Email no verificado</p>
-                      <p className="mb-3">Debes verificar tu email antes de iniciar sesión.</p>
+                      <p className="mb-3">Revisa tu correo y hacé clic en el enlace de verificación. Si no lo encontrás, podés reenviarlo.</p>
                       <Button
                         type="button"
                         variant="outline"
