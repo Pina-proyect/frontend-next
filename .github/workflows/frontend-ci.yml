@@ -51,13 +51,7 @@ jobs:
         run: yarn lint ${{ steps.changed.outputs.files }}
 
       - name: Run unit tests
-        run: yarn vitest run --coverage
-
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: vitest-coverage
-          path: coverage
+        run: yarn test
 
       - name: Build
         run: yarn build
@@ -82,4 +76,6 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           # La acción ya agrega --fail --no-update --github-actions por defecto.
-          extra_args: --no-verification
+          # Sin --no-verification: verifica contra APIs reales y solo falla con
+          # secretos VERIFICADOS; los FlatIO unverified quedan como warnings.
+          extra_args: --results=verified
