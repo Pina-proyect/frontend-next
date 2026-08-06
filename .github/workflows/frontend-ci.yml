@@ -5,6 +5,7 @@ on:
     branches: ["main", "master", "testing"]
   pull_request:
     branches: ["main", "master"]
+  workflow_dispatch:
 
   # Nota: evitamos defaults de working-directory para no afectar acciones (uses: ...).
   # En su lugar declaramos working-directory por cada paso que ejecuta comandos.
