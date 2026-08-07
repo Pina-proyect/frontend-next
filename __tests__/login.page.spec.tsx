@@ -51,7 +51,7 @@ describe('LoginPage', () => {
     expect(setAuthSession).toHaveBeenCalled()
   })
 
-  it('realiza una solicitud a /auth/me después del login', async () => {
+  it('envía email y password a /auth/login al enviar el formulario', async () => {
     const httpModule = await import('@/lib/http-client')
     const http = httpModule.http as unknown as Mock
 
@@ -63,20 +63,20 @@ describe('LoginPage', () => {
           user: { id: '1', email: 'user@example.com', fullName: 'User', provider: 'local', tokenVersion: 1 },
         }
       }
-      if (path === '/auth/me') {
-        return { id: '1', email: 'user@example.com', fullName: 'User', slug: '' }
-      }
       return {}
     })
 
     render(<LoginPage />)
-    fireEvent.input(screen.getAllByLabelText(/Email/i)[0], { target: { value: 'user@example.com' } })
-    fireEvent.input(screen.getAllByLabelText(/Contraseña/i)[0], { target: { value: 'Password123' } })
+    fireEvent.input(screen.getByPlaceholderText('name@domain.com'), { target: { value: 'user@example.com' } })
+    fireEvent.input(screen.getByPlaceholderText('••••••••'), { target: { value: 'Password123' } })
     fireEvent.click(screen.getAllByRole('button', { name: 'Iniciar Sesión' })[0])
 
     await waitFor(() => {
       const calls = http.mock.calls.map((c: any[]) => c[0])
-      expect(calls).toContain('/auth/me')
+      expect(calls).toContain('/auth/login')
     })
+    const args = http.mock.calls.find((c: any[]) => c[0] === '/auth/login')!
+    const parsedBody = JSON.parse(args[1].body)
+    expect(parsedBody).toEqual({ email: 'user@example.com', password: 'Password123' })
   })
 })

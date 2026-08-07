@@ -20,16 +20,17 @@ describe('RegisterPage', () => {
     render(<RegisterPage />)
 
     // Campos visibles
-    expect(screen.getAllByLabelText(/Email/i)[0]).toBeInTheDocument()
     expect(screen.getAllByLabelText(/Nombre completo/i)[0]).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/Correo/i)[0]).toBeInTheDocument()
     expect(screen.getAllByLabelText(/Contraseña/i)[0]).toBeInTheDocument()
-    expect(screen.getAllByLabelText(/Fecha de nacimiento/i)[0]).toBeInTheDocument()
 
     // Completar formulario
-    fireEvent.input(screen.getAllByLabelText(/Email/i)[0], { target: { value: 'user@example.com' } })
     fireEvent.input(screen.getAllByLabelText(/Nombre completo/i)[0], { target: { value: 'User Test' } })
+    fireEvent.input(screen.getAllByLabelText(/Correo/i)[0], { target: { value: 'user@example.com' } })
     fireEvent.input(screen.getAllByLabelText(/Contraseña/i)[0], { target: { value: 'Password123' } })
-    fireEvent.input(screen.getAllByLabelText(/Fecha de nacimiento/i)[0], { target: { value: '1990-01-01' } })
+
+    // Marcar age gate (requerido)
+    fireEvent.click(screen.getByLabelText(/Soy mayor de 18 años/i))
 
     // Enviar
     fireEvent.click(screen.getByRole('button', { name: /Crear cuenta/i }))
@@ -44,7 +45,9 @@ describe('RegisterPage', () => {
       fullName: 'User Test',
       email: 'user@example.com',
       password: 'Password123',
-      birthDate: '1990-01-01',
+      birthDate: '2000-01-01',
+      acknowledgedAge: true,
+      role: 'CREATOR',
     })
     expect(parsedBody.nationalId).toBeUndefined()
     expect(parsedBody.photoPath).toBeUndefined()
