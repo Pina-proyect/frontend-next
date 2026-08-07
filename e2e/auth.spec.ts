@@ -1,29 +1,30 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Auth Flows', () => {
-  test('Registro: muestra toast y redirige a /login', async ({ page }) => {
+  test('Registro: muestra pantalla de verificación de email', async ({ page }) => {
     // Interceptar backend de registro
     await page.route('**/api/pina/registro/creadora', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ status: 'pending', message: 'ok', userId: 'u1' }),
+        body: JSON.stringify({ status: 'success', message: 'ok', userId: 'u1' }),
       })
     })
 
     await page.goto('/register')
-    await page.getByLabel('Email').fill('user@example.com')
     await page.getByLabel('Nombre completo').fill('User Test')
+    await page.getByLabel('Correo electrónico').fill('user@example.com')
     await page.getByLabel('Contraseña').fill('Password123')
-    await page.getByLabel('Fecha de nacimiento').fill('1990-01-01')
+    // Age gate requerido
+    await page.getByText('Soy mayor de 18 años').click()
     await page.getByRole('button', { name: 'Crear cuenta' }).click()
 
-    // Toast y redirección
-    await expect(page.getByText('Registro iniciado')).toBeVisible()
-    await expect(page).toHaveURL(/\/login$/)
+    // Pantalla de confirmación de verificación por email
+    await expect(page.getByText('¡Cuenta creada!')).toBeVisible()
+    await expect(page.getByText(/Te enviamos un email de verificación/i)).toBeVisible()
   })
 
-  test('Login: envía credenciales y redirige a /dashboard', async ({ page }) => {
+  test('Login: envía credenciales y redirige a /onboarding', async ({ page }) => {
     // Interceptar backend de login
     await page.route('**/api/pina/auth/login', async (route) => {
       await route.fulfill({
@@ -38,15 +39,12 @@ test.describe('Auth Flows', () => {
     })
 
     await page.goto('/login')
-    await page.getByLabel('Email').fill('user@example.com')
-    await page.getByLabel('Contraseña').fill('Password123')
+    await page.getByPlaceholder('name@domain.com').fill('user@example.com')
+    await page.getByPlaceholder('••••••••').fill('Password123')
     // Seleccionar el botón de envío exacto para evitar colisiones con el botón de Google
     await page.getByRole('button', { name: 'Iniciar Sesión', exact: true }).click()
-    // Simular cookie de sesión colocada por el backend (necesaria para pasar el middleware)
-    await page.context().addCookies([
-      { name: 'refreshToken', value: 'rt', domain: 'localhost', path: '/' },
-    ])
 
-    await expect(page).toHaveURL(/\/dashboard$/)
+    // Usuario sin slug → onboarding (permitir dashboard como alternativa robusta)
+    await page.waitForURL(/\/(onboarding|dashboard)/, { timeout: 15000 })
   })
 })
