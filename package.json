@@ -10,7 +10,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "e2e": "playwright test",
-    "ci:e2e": "(yarn start -p 4011 &) && yarn dlx wait-on http://localhost:4011 && yarn e2e"
+    "ci:e2e": "(yarn start -p 4011 &) && npx wait-on http://localhost:4011 && yarn e2e"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
