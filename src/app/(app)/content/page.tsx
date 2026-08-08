@@ -64,7 +64,7 @@ export default function ContentPage() {
 
       toast({ title: "Éxito", description: "Archivo subido correctamente al estudio." });
       fetchMedia();
-    } catch (error) {
+    } catch {
       toast({ variant: "destructive", title: "Error", description: "No se pudo subir el archivo." });
     } finally {
       setUploading(false);
@@ -82,7 +82,7 @@ export default function ContentPage() {
       });
       toast({ title: "Eliminado", description: "El archivo ha sido borrado con éxito." });
       fetchMedia();
-    } catch (error) {
+    } catch {
       toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el archivo." });
     }
   };

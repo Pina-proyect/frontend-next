@@ -94,7 +94,7 @@ export default function PacksPage() {
       setIsCreating(false);
       setFormData({ title: "", description: "", price: 0, categoryId: "", mediaIds: [] });
       fetchData();
-    } catch (error) {
+    } catch {
       toast({ variant: "destructive", title: "Error", description: "No se pudo crear el pack." });
     }
   };

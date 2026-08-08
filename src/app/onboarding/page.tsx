@@ -11,7 +11,6 @@ import { http } from "@/lib/http-client";
 import { getAuthToken, updateAuthUser, type User } from "@/store/use-auth-store";
 import { useToast } from "@/components/ui/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 
 /* -------------------------------------------------------------------------- */
 /*                                   STEP 1: NICHE                            */
@@ -361,6 +360,8 @@ function Step2ProfileSetup() {
 /* El handler `handleLaunch` (PATCH /auth/profile + updateAuthUser +          */
 /* redirect a /dashboard) está intacto y es reusable.                         */
 /* -------------------------------------------------------------------------- */
+// Conservado a propósito para su futura re-integración (issue #30).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function Step3ConnectSocials() {
   const router = useRouter();
   const { toast } = useToast();

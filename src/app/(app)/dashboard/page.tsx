@@ -48,8 +48,8 @@ export default function DashboardPage() {
       try {
         const [donationsData, mediaData, packsData] = await Promise.all([
           http<Donation[]>(`/creators/${user.id}/donations`).catch(() => []),
-          http<any[]>("/media/my-content").catch(() => []),
-          http<any[]>("/packs/my-packs").catch(() => [])
+          http<unknown[]>("/media/my-content").catch(() => []),
+          http<unknown[]>("/packs/my-packs").catch(() => [])
         ]);
         
         if (active) {
@@ -283,7 +283,7 @@ export default function DashboardPage() {
                     </div>
                     {donation.message && (
                       <p className="text-xs bg-surface-container-low text-on-surface-variant p-3.5 rounded-xl italic font-medium leading-relaxed">
-                        "{donation.message}"
+                        &quot;{donation.message}&quot;
                       </p>
                     )}
                   </div>

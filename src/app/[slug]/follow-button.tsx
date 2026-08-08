@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { http } from "@/lib/http-client";
 import { useAuthStore } from "@/store/use-auth-store";
 

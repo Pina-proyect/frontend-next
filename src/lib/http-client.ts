@@ -76,12 +76,17 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
     // Otros errores
     const errorBody = await response.text().catch(() => response.statusText);
     try {
-      const errorJson = JSON.parse(errorBody);
-      const err = new Error(errorJson.message || `HTTP ${response.status}`);
-      (err as any).code = errorJson.code;
+      const errorJson = JSON.parse(errorBody) as {
+        message?: string;
+        code?: string;
+      };
+      const err = new Error(
+        errorJson.message || `HTTP ${response.status}`
+      ) as Error & { code?: string };
+      err.code = errorJson.code;
       throw err;
     } catch (e) {
-      if ((e as any)?.code) throw e;
+      if (e instanceof Error && "code" in e) throw e;
       throw new Error(errorBody || `HTTP ${response.status}`);
     }
   }

@@ -7,16 +7,18 @@ import { http } from "@/lib/http-client";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    searchParams.get("token") ? "loading" : "error"
+  );
+  const [message, setMessage] = useState(
+    searchParams.get("token")
+      ? ""
+      : "Token de verificación no proporcionado."
+  );
 
   useEffect(() => {
     const token = searchParams.get("token");
-    if (!token) {
-      setStatus("error");
-      setMessage("Token de verificación no proporcionado.");
-      return;
-    }
+    if (!token) return;
 
     http<{ message: string }>(`/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then(() => {

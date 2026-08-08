@@ -10,7 +10,6 @@ function PaymentStatusContent() {
   const status = searchParams.get("status");
 
   const isSuccess = status === "success";
-  const isFailure = status === "failure";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface p-6">

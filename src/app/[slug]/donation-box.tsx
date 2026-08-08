@@ -23,7 +23,7 @@ interface DonationBoxProps {
   pinaPrice: number;
 }
 
-export default function DonationBox({ creatorId, creatorName, pinaPrice }: DonationBoxProps) {
+export default function DonationBox({ creatorId, pinaPrice }: DonationBoxProps) {
   const { toast } = useToast();
   const user = useAuthStore((s) => s.user);
   
@@ -104,11 +104,14 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
       } else {
         throw new Error("No se pudo generar la preferencia de pago.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error al iniciar pago",
-        description: error.message || "Ocurrió un error al procesar la donación.",
+        description:
+          error instanceof Error && error.message
+            ? error.message
+            : "Ocurrió un error al procesar la donación.",
       });
       setIsSubmitting(false);
     }
@@ -273,7 +276,7 @@ export default function DonationBox({ creatorId, creatorName, pinaPrice }: Donat
                 </div>
                 {donation.message && (
                   <p className="text-on-surface-variant font-medium text-xs leading-relaxed break-words bg-surface-container-lowest/50 p-2.5 rounded-xl border border-outline-variant/5">
-                    "{donation.message}"
+                    &quot;{donation.message}&quot;
                   </p>
                 )}
                 <div className="text-[9px] font-bold text-on-surface-variant/40 uppercase tracking-widest text-right">

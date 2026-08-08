@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { PublicHeader } from "@/components/public-header";
 
 export default function Home() {

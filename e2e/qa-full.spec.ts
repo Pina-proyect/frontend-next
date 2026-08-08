@@ -1,8 +1,6 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const TEST_USER = { email: 'luna@test.pina', password: 'Test1234' };
-const ALT_USER = { email: 'sofia@test.pina', password: 'Test1234' };
-const TTL_USER = { email: 'vale@test.pina', password: 'Test1234' };
 
 async function loginAs(page: Page, email: string, password: string) {
   // Use API directly for reliable auth, then set session state
@@ -35,10 +33,6 @@ async function fullUILogin(page: Page, email: string, password: string) {
   await page.fill('input[placeholder="name@domain.com"]', email);
   await page.fill('input[placeholder="••••••••"]', password);
   await page.getByRole('button', { name: 'Iniciar Sesión', exact: true }).click();
-}
-
-async function newContext(browser: any): Promise<BrowserContext> {
-  return await browser.newContext();
 }
 
 // ============================================================

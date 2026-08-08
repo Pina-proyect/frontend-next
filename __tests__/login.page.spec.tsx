@@ -72,10 +72,10 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Iniciar Sesión' })[0])
 
     await waitFor(() => {
-      const calls = http.mock.calls.map((c: any[]) => c[0])
+      const calls = http.mock.calls.map((c) => c[0])
       expect(calls).toContain('/auth/login')
     })
-    const args = http.mock.calls.find((c: any[]) => c[0] === '/auth/login')!
+    const args = http.mock.calls.find((c) => c[0] === '/auth/login')!
     const parsedBody = JSON.parse(args[1].body)
     expect(parsedBody).toEqual({ email: 'user@example.com', password: 'Password123' })
   })

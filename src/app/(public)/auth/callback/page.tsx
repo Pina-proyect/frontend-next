@@ -81,7 +81,7 @@ function AuthCallbackContent() {
           const hasSlug = !!me?.slug?.trim();
           router.push(hasSlug ? "/dashboard" : "/onboarding");
         }
-      } catch (error) {
+      } catch {
         toast({ variant: "destructive", title: "Autenticación fallida", description: "Intenta iniciar sesión nuevamente" });
         router.push("/login?error=auth_failed");
       }

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useAuthStore, clearAuthSession, getAuthToken, type User } from "@/store/use-auth-store";
+import { useAuthStore, clearAuthSession, type User } from "@/store/use-auth-store";
 import { useToast } from "@/components/ui/use-toast";
 import { http } from "@/lib/http-client";
 
@@ -126,7 +126,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           setProfile(me);
           setLoading(false);
         }
-      } catch (error) {
+      } catch {
         if (mounted) {
           toast({ variant: "destructive", title: "Aviso", description: "Tu sesión ha expirado" });
           router.replace("/login");
@@ -137,6 +137,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (!storedUser) {
       verify();
     } else {
+      // El usuario ya está en el store: apagamos el loader de forma síncrona
+      // para evitar un frame de "Cargando tu Estudio..." innecesario.
+      // Refactor a estado derivado quedaría para la migración al React Compiler.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
     }
     

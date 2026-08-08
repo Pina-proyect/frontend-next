@@ -1,8 +1,24 @@
-import { http } from "@/lib/http-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Metadata } from "next";
 import DonationBox from "./donation-box";
+import CreatorContent, { type ContentPack } from "./creator-content";
+import FollowButton from "./follow-button";
+
+interface CreatorProfile {
+  id: string;
+  fullName: string;
+  slug: string;
+  bio: string | null;
+  photoPath: string | null;
+  gender: string | null;
+  niche: string | null;
+  instagram: boolean;
+  tiktok: boolean;
+  youtube: boolean;
+  createdAt: string;
+  pinaPrice: number | null;
+}
 
 const getGenderedNiche = (gender: string, niche: string | null) => {
   const prefix = gender === "creador" ? "Creador" : "Creadora";
@@ -15,28 +31,30 @@ const getGenderedNiche = (gender: string, niche: string | null) => {
   }
 };
 
-async function getCreatorProfile(slug: string): Promise<any | null> {
+async function getCreatorProfile(
+  slug: string,
+): Promise<CreatorProfile | null> {
   const backend = (process.env.BACKEND_URL || "http://localhost:4011").replace(/\/$/, "");
   const url = `${backend}/api/pina/users/profile/${slug}`;
   
   try {
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return null;
-    return await res.json();
+    return (await res.json()) as CreatorProfile;
   } catch (error) {
     console.error("Error al obtener perfil:", error);
     return null;
   }
 }
 
-async function getCreatorPacks(slug: string): Promise<any[]> {
+async function getCreatorPacks(slug: string): Promise<ContentPack[]> {
   const backend = (process.env.BACKEND_URL || "http://localhost:4011").replace(/\/$/, "");
   const url = `${backend}/api/pina/packs/public/${slug}`;
   
   try {
     const res = await fetch(url, { next: { revalidate: 60 } });
     if (!res.ok) return [];
-    return await res.json();
+    return (await res.json()) as ContentPack[];
   } catch (error) {
     console.error("Error al obtener packs:", error);
     return [];
@@ -46,9 +64,6 @@ async function getCreatorPacks(slug: string): Promise<any[]> {
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
-
-import CreatorContent from "./creator-content";
-import FollowButton from "./follow-button";
 
 export default async function CreatorProfilePage({ params }: PageProps) {
   const { slug } = await params;

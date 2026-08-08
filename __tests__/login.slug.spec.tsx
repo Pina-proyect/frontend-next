@@ -22,7 +22,7 @@ describe('LoginPage redirección según slug', () => {
     const httpModule = await import('@/lib/http-client')
     const http = httpModule.http as unknown as Mock
 
-    http.mockImplementation(async (path: string, init?: any) => {
+    http.mockImplementation(async (path: string) => {
       if (path === '/auth/login') {
         return {
           accessToken: 'at',
@@ -43,7 +43,7 @@ describe('LoginPage redirección según slug', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar Sesión' }))
 
     await waitFor(() => {
-      const calls = http.mock.calls.map((c: any[]) => c[0])
+      const calls = http.mock.calls.map((c) => c[0])
       expect(calls).toContain('/auth/me')
     })
   })

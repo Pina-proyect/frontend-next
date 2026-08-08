@@ -1,10 +1,27 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useAuthStore, setAuthSession, getRefreshToken } from "@/store/use-auth-store";
+import React, { useState, useEffect } from "react";
+import { useAuthStore, setAuthSession, getRefreshToken, type User } from "@/store/use-auth-store";
 import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
 import { useSearchParams } from "next/navigation";
+
+type PaymentSettings = {
+  isConnected: boolean;
+  provider: string;
+  accountName?: string;
+  accountEmail?: string;
+};
+
+type SessionItem = {
+  id: string;
+  title: string;
+  createdAt: string;
+};
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 
 function SettingsContent() {
   const user = useAuthStore((s) => s.user);
@@ -19,14 +36,9 @@ function SettingsContent() {
   const [disconnecting, setDisconnecting] = useState(false);
   
   // Payment Settings State (cargado dinámicamente desde /creators/me/payment-settings)
-  const [paymentSettings, setPaymentSettings] = useState<{
-    isConnected: boolean;
-    provider: string;
-    accountName?: string;
-    accountEmail?: string;
-  } | null>(null);
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings | null>(null);
   const [loadingPaymentSettings, setLoadingPaymentSettings] = useState(false);
-  const [sessions, setSessions] = useState<{ id: string; title: string; createdAt: string }[]>([]);
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
   
   // Monetization State
@@ -71,7 +83,7 @@ function SettingsContent() {
       const fetchPaymentSettings = async () => {
         setLoadingPaymentSettings(true);
         try {
-          const settings = await http<any>("/creators/me/payment-settings");
+          const settings = await http<PaymentSettings>("/creators/me/payment-settings");
           setPaymentSettings(settings);
         } catch (err) {
           console.error("Error fetching payment settings:", err);
@@ -92,7 +104,7 @@ function SettingsContent() {
     setLoading(true);
 
     try {
-      const updatedUser = await http<any>("/users/profile", {
+      const updatedUser = await http<Partial<User>>("/users/profile", {
         method: "PATCH",
         body: JSON.stringify({
           mpAccessToken, // Se mantiene en el payload por compatibilidad
@@ -113,11 +125,14 @@ function SettingsContent() {
         title: "Configuración guardada",
         description: "Tus opciones de monetización han sido actualizadas con éxito.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Ocurrió un error al guardar la configuración.",
+        description: getErrorMessage(
+          error,
+          "Ocurrió un error al guardar la configuración.",
+        ),
       });
     } finally {
       setLoading(false);
@@ -128,7 +143,7 @@ function SettingsContent() {
     e.preventDefault();
     setLoading(true);
     try {
-      const updatedUser = await http<any>("/users/profile", {
+      const updatedUser = await http<Partial<User>>("/users/profile", {
         method: "PATCH",
         body: JSON.stringify({
           fullName,
@@ -152,11 +167,11 @@ function SettingsContent() {
         title: "Perfil actualizado",
         description: "Los datos de tu perfil público han sido guardados con éxito.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error al actualizar perfil",
-        description: error.message || "Ocurrió un error al guardar.",
+        description: getErrorMessage(error, "Ocurrió un error al guardar."),
       });
     } finally {
       setLoading(false);
@@ -167,7 +182,7 @@ function SettingsContent() {
     e.preventDefault();
     setLoading(true);
     try {
-      const updatedUser = await http<any>("/users/profile", {
+      const updatedUser = await http<Partial<User>>("/users/profile", {
         method: "PATCH",
         body: JSON.stringify({
           phone,
@@ -184,11 +199,11 @@ function SettingsContent() {
         title: "Seguridad actualizada",
         description: "La información de tu cuenta ha sido guardada con éxito.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Ocurrió un error al guardar.",
+        description: getErrorMessage(error, "Ocurrió un error al guardar."),
       });
     } finally {
       setLoading(false);
@@ -203,11 +218,14 @@ function SettingsContent() {
       if (response.url) {
         window.location.href = response.url;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "No se pudo iniciar la conexión con Mercado Pago.",
+        description: getErrorMessage(
+          error,
+          "No se pudo iniciar la conexión con Mercado Pago.",
+        ),
       });
     }
   };
@@ -215,7 +233,7 @@ function SettingsContent() {
   const handleDisconnectMp = async () => {
     setDisconnecting(true);
     try {
-      await http<any>("/creators/me/mp/disconnect", {
+      await http<unknown>("/creators/me/mp/disconnect", {
         method: "POST",
       });
 
@@ -242,11 +260,14 @@ function SettingsContent() {
         title: "Cuenta desvinculada",
         description: "Tu cuenta de Mercado Pago ha sido desvinculada correctamente.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Ocurrió un error al desvincular la cuenta.",
+        description: getErrorMessage(
+          error,
+          "Ocurrió un error al desvincular la cuenta.",
+        ),
       });
     } finally {
       setDisconnecting(false);
@@ -259,7 +280,7 @@ function SettingsContent() {
     setLoadingSessions(true);
     const fetchSessions = async () => {
       try {
-        const data = await http<any[]>("/users/sessions");
+        const data = await http<SessionItem[]>("/users/sessions");
         if (mounted) setSessions(data || []);
       } catch { /* ignore */ }
       finally { if (mounted) setLoadingSessions(false); }

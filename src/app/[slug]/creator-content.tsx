@@ -7,14 +7,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import CommentsSection from "./comments-section";
 
-interface Media {
+export interface Media {
   id: string;
   title: string;
   url: string;
   type: string;
 }
 
-interface ContentPack {
+export interface ContentPack {
   id: string;
   title: string;
   description: string;
@@ -23,11 +23,16 @@ interface ContentPack {
   media: Media[];
 }
 
-export default function CreatorContent({ packs: initialPacks, creatorSlug }: { packs: ContentPack[], creatorSlug: string }) {
+export default function CreatorContent({
+  packs: initialPacks,
+}: {
+  packs: ContentPack[];
+  creatorSlug: string;
+}) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("paquetes");
-  const [packs, setPacks] = useState(initialPacks);
-  const [purchasedPacks, setPurchasedPacks] = useState<string[]>([]);
+  const [packs] = useState(initialPacks);
+  const [purchasedPacks] = useState<string[]>([]);
   const [buying, setBuying] = useState<string | null>(null);
   const [checkoutPackId, setCheckoutPackId] = useState<string | null>(null);
   const [checkoutPreferenceId, setCheckoutPreferenceId] = useState<string | null>(null);
@@ -46,7 +51,7 @@ export default function CreatorContent({ packs: initialPacks, creatorSlug }: { p
         setCheckoutPackId(packId);
         setCheckoutPreferenceId(response.id);
       }
-    } catch (error) {
+    } catch {
       toast({ 
         variant: "destructive", 
         title: "Error de Pago", 
