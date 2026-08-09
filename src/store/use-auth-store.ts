@@ -9,6 +9,12 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { useLayoutEffect, useState } from "react";
 
 // 1) Definición del modelo de usuario (alineado con backend Nest/Auth)
+export interface SocialLink {
+  platform: "instagram" | "youtube" | "tiktok";
+  url: string;
+  followers?: number;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -31,6 +37,14 @@ export interface User {
   youtube?: boolean;
   phone?: string | null;
   verificationStatus?: string;
+  // ── IA Onboarding (v1.18) ───────────────────────────
+  socialLinks?: SocialLink[] | null;
+  aiSummary?: string | null;
+  aiSuggestedNiche?: string | null;
+  aiSuggestedBio?: string | null;
+  aiSuggestedGoal?: { title: string; amount: number; currency: string } | null;
+  aiSuggestedPlan?: string | null;
+  aiPlanAccepted?: boolean;
 }
 
 interface AuthState {
@@ -93,6 +107,7 @@ export const useAuthStore = <T,>(selector: (state: AuthState) => T): T => {
 // 4) Acciones y selectores sincrónicos (útiles en utilidades fuera de React)
 export const getAuthToken = () => useAuthStoreBase.getState().accessToken;
 export const getRefreshToken = () => useAuthStoreBase.getState().refreshToken;
+export const getAuthUser = () => useAuthStoreBase.getState().user;
 export const setAuthSession = (data: {
   accessToken: string;
   refreshToken: string;
