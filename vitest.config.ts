@@ -7,9 +7,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./setupTests.ts'],
-    pool: 'vmThreads',
+    pool: 'forks',
     maxWorkers: 1,
-    isolate: false,
+    isolate: true,
     include: ['__tests__/**/*.{test,spec}.{ts,tsx}'],
     coverage: {
       reporter: ['text', 'html', 'lcov'],

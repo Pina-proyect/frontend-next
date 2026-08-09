@@ -1,19 +1,21 @@
-import { describe, it, expect, vi, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import LoginPage from '@/app/(public)/login/page'
 
-// Mock de http-client
+// Patrón del repo: factory sin referencias externas; shape unificado de
+// use-auth-store (el primer factory registrado gana con isolate:false).
 vi.mock('@/lib/http-client', () => ({
-  http: vi.fn(async () => ({
-    accessToken: 'at',
-    refreshToken: 'rt',
-    user: { id: '1', email: 'user@example.com', fullName: 'User', provider: 'local', tokenVersion: 1 },
-  })),
+  http: vi.fn(),
 }))
 
-// Mock de use-auth-store para interceptar setAuthSession
 vi.mock('@/store/use-auth-store', () => ({
+  getAuthToken: vi.fn(),
+  getRefreshToken: vi.fn(),
+  getAuthUser: vi.fn(),
   setAuthSession: vi.fn(),
+  updateAuthUser: vi.fn(),
+  clearAuthSession: vi.fn(),
+  useAuthStore: vi.fn(() => null),
 }))
 
 // Mock del toast
@@ -22,11 +24,27 @@ vi.mock('@/components/ui/use-toast', () => ({
 }))
 
 describe('LoginPage', () => {
+  beforeEach(async () => {
+    const { http } = await import('@/lib/http-client')
+    const httpMock = http as unknown as Mock
+    httpMock.mockReset()
+  })
+
   it.skip('renderiza y envía email/password al endpoint correcto', async () => {
-    const httpModule = await import('@/lib/http-client')
-    const storeModule = await import('@/store/use-auth-store')
-    const http = httpModule.http as unknown as Mock
-    const setAuthSession = storeModule.setAuthSession as unknown as Mock
+    const { http } = await import('@/lib/http-client')
+    const { setAuthSession } = await import('@/store/use-auth-store')
+    const httpMock = http as unknown as Mock
+
+    httpMock.mockImplementation(async (path: string) => {
+      if (path === '/auth/login') {
+        return {
+          accessToken: 'at',
+          refreshToken: 'rt',
+          user: { id: '1', email: 'user@example.com', fullName: 'User', provider: 'local', tokenVersion: 1 },
+        }
+      }
+      return {}
+    })
 
     render(<LoginPage />)
 
@@ -40,8 +58,8 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar Sesión' }))
 
     // Assert: http llamado con /auth/login y body esperado
-    await waitFor(() => expect(http).toHaveBeenCalled())
-    const args = http.mock.calls[0]
+    await waitFor(() => expect(httpMock).toHaveBeenCalled())
+    const args = httpMock.mock.calls[0]
     expect(args[0]).toBe('/auth/login')
     const init = args[1]
     const parsedBody = JSON.parse(init.body)
@@ -52,10 +70,10 @@ describe('LoginPage', () => {
   })
 
   it('envía email y password a /auth/login al enviar el formulario', async () => {
-    const httpModule = await import('@/lib/http-client')
-    const http = httpModule.http as unknown as Mock
+    const { http } = await import('@/lib/http-client')
+    const httpMock = http as unknown as Mock
 
-    http.mockImplementation(async (path: string) => {
+    httpMock.mockImplementation(async (path: string) => {
       if (path === '/auth/login') {
         return {
           accessToken: 'at',
@@ -72,10 +90,10 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Iniciar Sesión' })[0])
 
     await waitFor(() => {
-      const calls = http.mock.calls.map((c) => c[0])
+      const calls = httpMock.mock.calls.map((c) => c[0])
       expect(calls).toContain('/auth/login')
     })
-    const args = http.mock.calls.find((c) => c[0] === '/auth/login')!
+    const args = httpMock.mock.calls.find((c) => c[0] === '/auth/login')!
     const parsedBody = JSON.parse(args[1].body)
     expect(parsedBody).toEqual({ email: 'user@example.com', password: 'Password123' })
   })

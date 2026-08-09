@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, type Mock } from 'vitest'
+import { describe, it, expect, vi, afterEach, type Mock } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import LoginPage from '@/app/(public)/login/page'
 
@@ -6,8 +6,16 @@ vi.mock('@/components/ui/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }))
 
+// Patrón del repo: factory sin referencias externas; shape unificado de
+// use-auth-store (el primer factory registrado gana con isolate:false).
 vi.mock('@/store/use-auth-store', () => ({
+  getAuthToken: vi.fn(),
+  getRefreshToken: vi.fn(),
+  getAuthUser: vi.fn(),
   setAuthSession: vi.fn(),
+  updateAuthUser: vi.fn(),
+  clearAuthSession: vi.fn(),
+  useAuthStore: vi.fn(() => null),
 }))
 
 vi.mock('@/lib/http-client', () => ({
@@ -15,14 +23,16 @@ vi.mock('@/lib/http-client', () => ({
 }))
 
 describe('LoginPage redirección según slug', () => {
-  afterEach(() => {
-    vi.resetAllMocks()
+  afterEach(async () => {
+    const { http } = await import('@/lib/http-client')
+    const httpMock = http as unknown as Mock
+    httpMock.mockReset()
   })
   it.skip('llama /auth/me tras login', async () => {
-    const httpModule = await import('@/lib/http-client')
-    const http = httpModule.http as unknown as Mock
+    const { http } = await import('@/lib/http-client')
+    const httpMock = http as unknown as Mock
 
-    http.mockImplementation(async (path: string) => {
+    httpMock.mockImplementation(async (path: string) => {
       if (path === '/auth/login') {
         return {
           accessToken: 'at',
@@ -43,7 +53,7 @@ describe('LoginPage redirección según slug', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar Sesión' }))
 
     await waitFor(() => {
-      const calls = http.mock.calls.map((c) => c[0])
+      const calls = httpMock.mock.calls.map((c) => c[0])
       expect(calls).toContain('/auth/me')
     })
   })
