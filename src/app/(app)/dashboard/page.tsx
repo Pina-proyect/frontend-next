@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PlanPinaCard from "@/components/ai/plan-pina-card";
 
 interface Donation {
   id: string;
@@ -131,6 +132,17 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Sección "Tu plan Pina" — REQ-FE-6: solo si el creador aceptó el plan IA */}
+      {user?.aiPlanAccepted && (
+        <PlanPinaCard
+          aiSummary={user.aiSummary}
+          aiSuggestedNiche={user.aiSuggestedNiche}
+          aiSuggestedBio={user.aiSuggestedBio}
+          aiSuggestedGoal={user.aiSuggestedGoal}
+          aiSuggestedPlan={user.aiSuggestedPlan}
+        />
+      )}
 
       {/* Alerta de cuenta no conectada (Mercado Pago) */}
       {!user?.mpAccessToken && (
