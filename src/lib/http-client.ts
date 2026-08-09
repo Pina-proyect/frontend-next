@@ -82,8 +82,9 @@ export async function http<T>(path: string, options: HttpOptions = {}): Promise<
       };
       const err = new Error(
         errorJson.message || `HTTP ${response.status}`
-      ) as Error & { code?: string };
+      ) as Error & { code?: string; status?: number };
       err.code = errorJson.code;
+      err.status = response.status;
       throw err;
     } catch (e) {
       if (e instanceof Error && "code" in e) throw e;

@@ -178,7 +178,8 @@ function Step2ProfileSetup() {
       });
       updateAuthUser(updatedUser);
 
-      router.push("/dashboard");
+      // Paso 2 completo → avanzar al Paso 3 (Socials + IA)
+      useOnboardingStore.getState().nextStep();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error al guardar tu perfil";
       toast({ variant: "destructive", title: "Oops!", description: message });
@@ -348,29 +349,80 @@ function Step2ProfileSetup() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                       STEP 3: SOCIALS (PRESERVED — ver #30)                */
+/*                       STEP 3: SOCIALS + IA (v1.18)                          */
 /* -------------------------------------------------------------------------- */
-/* Este componente se conserva en el código pero fue extraído del stepper     */
-/* del onboarding por decisión de producto (issue #30).                       */
-/*                                                                            */
-/* Estado: NO se muestra en el flujo actual de onboarding.                    */
-/* Futuro: se integrará en el dashboard o se re-sumará al onboarding cuando   */
-/*         exista el backend de conexiones OAuth (Instagram, TikTok, YouTube).*/
-/*                                                                            */
-/* El handler `handleLaunch` (PATCH /auth/profile + updateAuthUser +          */
-/* redirect a /dashboard) está intacto y es reusable.                         */
+/* Paso 3 de 3: conectar redes → consent → analizar con IA → routing por      */
+/* caso (A: tarjetas editables, B/C: flujo guiado, D: presets manuales).      */
+/* 503 (IA no configurada) → degrada a caso D sin bloquear. 429 → mensaje     */
+/* de límite diario + flujo manual.                                           */
 /* -------------------------------------------------------------------------- */
-// Conservado a propósito para su futura re-integración (issue #30).
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+import AiResultsCard from "@/components/ai/ai-results-card";
+import type { RegenerateResult } from "@/components/ai/ai-results-card";
+import IdeaStepForm from "@/components/ai/idea-step-form";
+import { resolveLanguage } from "@/lib/ai-language";
+import type { AiAnalyzeResponse, SocialLinkInput } from "@/lib/ai-types";
+
+const DAILY_LIMIT_MESSAGE =
+  "Llegaste al límite diario de generaciones con IA (5 por día). Podés completar tu perfil manualmente y volver mañana.";
+
 function Step3ConnectSocials() {
   const router = useRouter();
   const { toast } = useToast();
-  const { connectedSocials, toggleSocial, slug, bio, prevStep, country, profileImage } = useOnboardingStore();
+  const {
+    connectedSocials,
+    toggleSocial,
+    slug,
+    bio,
+    prevStep,
+    country,
+    profileImage,
+    niche,
+    socialUrls,
+    followerCounts,
+    consent,
+    aiCase,
+    aiSuggestions,
+    aiAnalysisStatus,
+    setSocialUrl,
+    setFollowerCount,
+    setConsent,
+    setAiAnalysis,
+  } = useOnboardingStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
+  const language = resolveLanguage(country);
 
-  const handleLaunch = async () => {
-    setIsSubmitting(true);
+  const buildSocialLinks = (): SocialLinkInput[] => {
+    const links: SocialLinkInput[] = [];
+    if (connectedSocials.instagram && socialUrls.instagram) {
+      links.push({
+        platform: "instagram",
+        url: socialUrls.instagram,
+        followers: followerCounts.instagram || undefined,
+      });
+    }
+    if (connectedSocials.youtube && socialUrls.youtube) {
+      links.push({ platform: "youtube", url: socialUrls.youtube });
+    }
+    if (connectedSocials.tiktok && socialUrls.tiktok) {
+      links.push({
+        platform: "tiktok",
+        url: socialUrls.tiktok,
+        followers: followerCounts.tiktok || undefined,
+      });
+    }
+    return links;
+  };
+
+  const handleAnalyze = async () => {
+    if (!consent) {
+      toast({ variant: "destructive", title: "Consentimiento requerido", description: "Debés aceptar que Pina analice tu perfil para continuar." });
+      return;
+    }
+    setLimitMessage(null);
+    setAiAnalysis(null, null, "analyzing");
     try {
       const token = getAuthToken();
       if (!token) {
@@ -378,30 +430,130 @@ function Step3ConnectSocials() {
         router.push("/login");
         return;
       }
-
-      const updatedUser = await http<User>("/auth/profile", {
-        method: "PATCH",
+      const data = await http<AiAnalyzeResponse>("/ai/profile/analyze", {
+        method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ 
-          slug, 
-          bio, 
-          niche: useOnboardingStore.getState().niche,
-          gender: useOnboardingStore.getState().gender,
+        body: JSON.stringify({
+          consent,
+          socialLinks: buildSocialLinks(),
           country,
-          profileImageBase64: profileImage,
-          instagram: connectedSocials.instagram,
-          tiktok: connectedSocials.tiktok,
-          youtube: connectedSocials.youtube
+          niche,
+          bio,
+          language,
         }),
       });
-      updateAuthUser(updatedUser);
+      setAiAnalysis(data.case, data.suggestions ?? null, "done");
+    } catch (error: unknown) {
+      const status = (error as { status?: number }).status;
+      if (status === 429) {
+        setLimitMessage(DAILY_LIMIT_MESSAGE);
+        setAiAnalysis("D", null, "done");
+      } else {
+        // 503 (IA no configurada) u otro error → caso D manual, no bloquea
+        setAiAnalysis("D", null, "done");
+      }
+    }
+  };
 
+  const handleRegenerate = async (): Promise<RegenerateResult> => {
+    try {
+      const token = getAuthToken();
+      const data = await http<AiAnalyzeResponse>("/ai/profile/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          consent: true,
+          socialLinks: buildSocialLinks(),
+          country,
+          niche,
+          bio,
+          language,
+        }),
+      });
+      if (data.case === "A" && data.suggestions) {
+        setAiAnalysis("A", data.suggestions, "done");
+        return { limited: false, suggestions: data.suggestions };
+      }
+      setAiAnalysis(data.case, data.suggestions ?? null, "done");
+      return { limited: false };
+    } catch (error: unknown) {
+      const status = (error as { status?: number }).status;
+      if (status === 429) {
+        return { limited: true, message: DAILY_LIMIT_MESSAGE };
+      }
+      setAiAnalysis("D", null, "done");
+      return { limited: false };
+    }
+  };
+
+  const saveProfile = async (extra: Record<string, unknown> = {}) => {
+    const token = getAuthToken();
+    if (!token) {
+      toast({ variant: "destructive", title: "Error", description: "No autenticado" });
+      router.push("/login");
+      return;
+    }
+    const updatedUser = await http<User>("/auth/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        slug,
+        bio,
+        niche: useOnboardingStore.getState().niche,
+        gender: useOnboardingStore.getState().gender,
+        country,
+        profileImageBase64: profileImage,
+        instagram: connectedSocials.instagram,
+        tiktok: connectedSocials.tiktok,
+        youtube: connectedSocials.youtube,
+        socialLinks: buildSocialLinks(),
+        ...extra,
+      }),
+    });
+    updateAuthUser(updatedUser);
+    return updatedUser;
+  };
+
+  const handleManualLaunch = async () => {
+    setIsSubmitting(true);
+    try {
+      await saveProfile({ aiPlanAccepted: false });
       setShowAnimation(true);
       setTimeout(() => {
         router.push(`/dashboard`);
       }, 2500);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error al crear tu estudio";
+      toast({ variant: "destructive", title: "Oops!", description: message });
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveAiPlan = async () => {
+    // AiResultsCard ya persistió las sugerencias editadas vía PATCH /auth/profile
+    // con aiPlanAccepted=true (REQ-FE-4). Acá solo mostramos la animación y
+    // redirigimos al dashboard.
+    setShowAnimation(true);
+    setTimeout(() => {
+      router.push(`/dashboard`);
+    }, 2500);
+  };
+
+  const handleIdeasComplete = async (content: string) => {
+    setIsSubmitting(true);
+    try {
+      await saveProfile({
+        aiSuggestedPlan: content,
+        aiPlanAccepted: true,
+        aiSummary: `Creadora enfocada en ${niche || "su nicho"}. Plan generado con IA.`,
+        aiSuggestedNiche: niche,
+      });
+      setShowAnimation(true);
+      setTimeout(() => {
+        router.push(`/dashboard`);
+      }, 2500);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al guardar tu plan";
       toast({ variant: "destructive", title: "Oops!", description: message });
       setIsSubmitting(false);
     }
@@ -421,6 +573,44 @@ function Step3ConnectSocials() {
       </div>
     );
   }
+
+  // Caso A — tarjetas editables (ya analizado)
+  if (aiCase === "A" && aiSuggestions && aiAnalysisStatus === "done") {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto fade-in animate-in slide-in-from-right-4 duration-500">
+        <AiResultsCard
+          suggestions={aiSuggestions}
+          language={language}
+          socialLinks={buildSocialLinks()}
+          onRegenerate={handleRegenerate}
+          onSaved={handleSaveAiPlan}
+        />
+        <button onClick={prevStep} className="mt-8 text-sm text-outline font-medium hover:text-primary transition-colors">Go Back</button>
+      </div>
+    );
+  }
+
+  // Casos B/C — flujo guiado de ideas
+  if ((aiCase === "B" || aiCase === "C") && aiAnalysisStatus === "done") {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto fade-in animate-in slide-in-from-right-4 duration-500">
+        <IdeaStepForm
+          aiCase={aiCase}
+          language={language}
+          baseContext={
+            aiSuggestions
+              ? `Nicho: ${aiSuggestions.suggestedNiche}. Bio: ${aiSuggestions.suggestedBio}`
+              : undefined
+          }
+          onComplete={handleIdeasComplete}
+          onExit={() => setAiAnalysis(null, null, "idle")}
+        />
+      </div>
+    );
+  }
+
+  // Caso D o 429 — flujo manual (o paso de conexión inicial)
+  const showManualLaunch = aiCase === "D" && aiAnalysisStatus === "done";
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto fade-in animate-in slide-in-from-right-4 duration-500">
@@ -444,7 +634,7 @@ function Step3ConnectSocials() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full">
             {/* Instagram Card */}
             <div className={`md:col-span-8 glass-panel border rounded-xl p-8 shadow-[0_12px_32px_-4px_rgba(67,82,165,0.06)] flex flex-col justify-between group transition-colors ${connectedSocials.instagram ? 'border-primary/50 bg-primary/5' : 'border-outline-variant/15'}`}>
-                <div className="flex justify-between items-start mb-12">
+                <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center">
                             <span className="material-symbols-outlined text-primary text-3xl">photo_camera</span>
@@ -459,32 +649,36 @@ function Step3ConnectSocials() {
                         <div className="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </label>
                 </div>
-                {connectedSocials.instagram ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/10">
-                            <span className="block text-xs font-bold text-outline uppercase tracking-wider mb-1">Status</span>
-                            <span className="text-primary font-semibold flex items-center gap-1">
-                                <span className="material-symbols-outlined text-sm" style={{fontVariationSettings: "'FILL' 1"}}>check_circle</span>
-                                Conectado
-                            </span>
-                        </div>
-                        <div className="p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/10">
-                            <span className="block text-xs font-bold text-outline uppercase tracking-wider mb-1">Audience</span>
-                            <span className="font-headline font-bold text-lg">Mocked Value</span>
-                        </div>
-                        <div className="p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/10">
-                            <span className="block text-xs font-bold text-outline uppercase tracking-wider mb-1">Username</span>
-                            <span className="text-on-surface font-medium">@{slug || "user"}</span>
-                        </div>
+                {connectedSocials.instagram && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-outline uppercase tracking-wider">URL de Instagram</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-3 bg-surface-container-lowest rounded-lg text-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/30 outline-none"
+                        placeholder="https://instagram.com/usuario"
+                        value={socialUrls.instagram}
+                        onChange={(e) => setSocialUrl("instagram", e.target.value)}
+                      />
                     </div>
-                ) : (
-                    <div className="p-4 text-sm text-on-surface-variant">Activa para conectar tu cuenta.</div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-outline uppercase tracking-wider">Seguidores (opcional)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-full px-4 py-3 bg-surface-container-lowest rounded-lg text-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/30 outline-none"
+                        placeholder="Ej: 1500"
+                        value={followerCounts.instagram || ""}
+                        onChange={(e) => setFollowerCount("instagram", Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
                 )}
             </div>
 
             {/* YouTube Card */}
             <div className={`md:col-span-4 glass-panel border rounded-xl p-8 flex flex-col group transition-colors ${connectedSocials.youtube ? 'border-primary/50' : 'border-outline-variant/15'}`}>
-                <div className="flex justify-between items-start mb-8">
+                <div className="flex justify-between items-start mb-6">
                     <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center">
                         <span className="material-symbols-outlined text-primary text-3xl">smart_display</span>
                     </div>
@@ -494,12 +688,24 @@ function Step3ConnectSocials() {
                     </label>
                 </div>
                 <h3 className="text-xl font-headline font-bold mb-1">YouTube</h3>
-                <p className="text-sm text-on-surface-variant mb-6">Rendimiento de Videos y Shorts</p>
+                <p className="text-sm text-on-surface-variant mb-4">Rendimiento de Videos y Shorts</p>
+                {connectedSocials.youtube && (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-outline uppercase tracking-wider">URL de YouTube</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-surface-container-lowest rounded-lg text-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/30 outline-none"
+                      placeholder="https://youtube.com/@usuario"
+                      value={socialUrls.youtube}
+                      onChange={(e) => setSocialUrl("youtube", e.target.value)}
+                    />
+                  </div>
+                )}
             </div>
 
             {/* TikTok Card */}
             <div className={`md:col-span-5 glass-panel border rounded-xl p-8 flex flex-col group transition-colors ${connectedSocials.tiktok ? 'border-primary/50' : 'border-outline-variant/15'}`}>
-                <div className="flex justify-between items-start mb-8">
+                <div className="flex justify-between items-start mb-6">
                     <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center">
                         <span className="material-symbols-outlined text-primary text-3xl">music_note</span>
                     </div>
@@ -509,7 +715,30 @@ function Step3ConnectSocials() {
                     </label>
                 </div>
                 <h3 className="text-xl font-headline font-bold mb-1">TikTok</h3>
-                <p className="text-sm text-on-surface-variant mb-6">Seguimiento de contenido viral</p>
+                <p className="text-sm text-on-surface-variant mb-4">Seguimiento de contenido viral</p>
+                {connectedSocials.tiktok && (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-outline uppercase tracking-wider">URL de TikTok</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-surface-container-lowest rounded-lg text-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/30 outline-none"
+                      placeholder="https://tiktok.com/@usuario"
+                      value={socialUrls.tiktok}
+                      onChange={(e) => setSocialUrl("tiktok", e.target.value)}
+                    />
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-outline uppercase tracking-wider">Seguidores (opcional)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-full px-4 py-3 bg-surface-container-lowest rounded-lg text-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/30 outline-none"
+                        placeholder="Ej: 800"
+                        value={followerCounts.tiktok || ""}
+                        onChange={(e) => setFollowerCount("tiktok", Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                )}
             </div>
 
             {/* Success Visualizer */}
@@ -530,16 +759,61 @@ function Step3ConnectSocials() {
             </div>
         </div>
 
-        {/* Action Footer */}
-        <div className="w-full mt-16 flex flex-col items-center gap-6">
-            <button 
-               onClick={handleLaunch} 
-               disabled={isSubmitting}
-               className="bg-gradient-to-br from-primary to-primary-container text-white px-12 py-5 rounded-xl font-headline font-extrabold text-lg shadow-[0_20px_50px_rgba(67,82,165,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3 group disabled:opacity-50 disabled:pointer-events-none"
+        {/* Consent + Análisis IA */}
+        <div className="w-full mt-10 p-6 bg-surface-container-lowest rounded-2xl ring-1 ring-outline-variant/10 space-y-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-1 w-5 h-5 rounded accent-primary"
+              aria-label="Acepto que Pina analice mi perfil público para generar sugerencias"
+            />
+            <span className="text-sm text-on-surface-variant leading-relaxed">
+              Acepto que Pina analice mi perfil público (redes, bio y métricas) para generar sugerencias personalizadas con IA. Solo se guardan datos agregados, nunca el contenido de mis publicaciones.
+            </span>
+          </label>
+
+          {limitMessage && (
+            <div role="alert" className="p-4 bg-error/10 text-error rounded-xl text-sm font-semibold flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg">timer</span>
+              {limitMessage}
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
+            <button
+              onClick={handleAnalyze}
+              disabled={!consent || aiAnalysisStatus === "analyzing"}
+              className="bg-gradient-to-br from-primary to-primary-container text-white px-8 py-4 rounded-xl font-headline font-bold text-sm shadow-[0_12px_32px_-4px_rgba(67,82,165,0.2)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
             >
+              {aiAnalysisStatus === "analyzing" ? (
+                <>
+                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+                  Analizando tu perfil...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-lg">auto_awesome</span>
+                  Analizar con IA
+                </>
+              )}
+            </button>
+            {showManualLaunch && (
+              <button
+                onClick={handleManualLaunch}
+                disabled={isSubmitting}
+                className="bg-gradient-to-br from-primary to-primary-container text-white px-12 py-5 rounded-xl font-headline font-extrabold text-lg shadow-[0_20px_50px_rgba(67,82,165,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3 group disabled:opacity-50 disabled:pointer-events-none"
+              >
                 {isSubmitting ? "Lanzando..." : "Lanzar Estudio"}
                 {!isSubmitting && <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>}
-            </button>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Action Footer */}
+        <div className="w-full mt-8 flex flex-col items-center gap-6">
             <div className="flex gap-4">
               <button onClick={prevStep} className="text-sm text-outline font-medium hover:text-primary transition-colors">Go Back</button>
             </div>
@@ -564,8 +838,9 @@ export default function OnboardingPage() {
             <div className="flex items-center gap-2">
                 <div className={`w-8 h-1.5 rounded-full transition-colors duration-500 delay-100 ${currentStep >= 1 ? "bg-gradient-to-br from-primary to-primary-container" : "bg-surface-container-highest"}`}></div>
                 <div className={`w-8 h-1.5 rounded-full transition-colors duration-500 delay-200 ${currentStep >= 2 ? "bg-gradient-to-br from-primary to-primary-container" : "bg-surface-container-highest"}`}></div>
+                <div className={`w-8 h-1.5 rounded-full transition-colors duration-500 delay-300 ${currentStep >= 3 ? "bg-gradient-to-br from-primary to-primary-container" : "bg-surface-container-highest"}`}></div>
             </div>
-            <span className="text-[0.75rem] font-semibold text-primary tracking-wider uppercase ml-2 hidden sm:block">Paso {currentStep} de 2</span>
+            <span className="text-[0.75rem] font-semibold text-primary tracking-wider uppercase ml-2 hidden sm:block">Paso {currentStep} de 3</span>
         </div>
         <div className="flex items-center gap-4">
         </div>
@@ -606,6 +881,9 @@ export default function OnboardingPage() {
                 </div>
             </div>
         )}
+
+        {/* Step 3 — Socials + IA (v1.18) */}
+        {currentStep === 3 && <Step3ConnectSocials />}
       </main>
       
       {/* Font Injection for Material Symbols */}
