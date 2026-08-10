@@ -1,26 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-
-interface Media {
-  id: string;
-  title: string;
-  url: string;
-  type: string;
-  mimetype: string;
-  size: number;
-  createdAt: string;
-}
+import { VideoPlayer } from "@/components/video/video-player";
+import { MediaItem, isVideo } from "@/lib/media";
 
 export default function ContentPage() {
   const { toast } = useToast();
-  const [mediaList, setMediaList] = useState<Media[]>([]);
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
   useEffect(() => {
     fetchMedia();
@@ -37,7 +29,7 @@ export default function ContentPage() {
 
   const fetchMedia = async () => {
     try {
-      const data = await http<Media[]>("/media/my-content");
+      const data = await http<MediaItem[]>("/media/my-content");
       setMediaList(data);
     } catch (error) {
       console.error("Error fetching media:", error);
@@ -87,6 +79,16 @@ export default function ContentPage() {
     }
   };
 
+  /** Re-resuelve la URL de un media (para VideoPlayer onResolve). */
+  const resolveUrl = useCallback(async (item: MediaItem): Promise<string> => {
+    const fresh = await http<MediaItem[]>("/media/my-content");
+    const found = fresh.find((m) => m.id === item.id);
+    return found?.resolvedUrl?.url ?? found?.url ?? "";
+  }, []);
+
+  const mediaUrl = (item: MediaItem): string =>
+    item.resolvedUrl?.url ?? item.url;
+
   return (
     <div className="p-6 lg:p-10 max-w-screen-2xl mx-auto w-full space-y-10 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -135,15 +137,18 @@ export default function ContentPage() {
                 className="aspect-video bg-black relative cursor-pointer"
                 onClick={() => setSelectedMedia(item)}
               >
-                {item.type === "video" ? (
-                  <video src={item.url} className="w-full h-full object-cover opacity-80" />
+                {isVideo(item) ? (
+                  // Cover de video: poster/ícono, nunca <img src=video-url>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white/80 text-5xl">play_circle</span>
+                  </div>
                 ) : (
-                  <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+                  <img src={mediaUrl(item)} alt={item.title ?? ""} className="w-full h-full object-cover" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 group-hover:from-black/40 transition-all">
                    <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-white text-sm">
-                        {item.type === "video" ? "play_circle" : "image"}
+                        {isVideo(item) ? "play_circle" : "image"}
                       </span>
                       <p className="text-white text-xs font-bold truncate max-w-[150px]">{item.title}</p>
                    </div>
@@ -190,17 +195,17 @@ export default function ContentPage() {
             className="max-w-full max-h-full flex flex-col items-center gap-4"
             onClick={(e) => e.stopPropagation()}
           >
-            {selectedMedia.type === "video" ? (
-              <video 
-                src={selectedMedia.url} 
-                controls 
-                autoPlay 
-                className="max-w-full max-h-[80vh] rounded-xl shadow-2xl" 
+            {isVideo(selectedMedia) ? (
+              <VideoPlayer
+                url={mediaUrl(selectedMedia)}
+                expiresAt={selectedMedia.resolvedUrl?.expiresAt}
+                onResolve={() => resolveUrl(selectedMedia)}
+                className="max-w-full max-h-[80vh]"
               />
             ) : (
               <img 
-                src={selectedMedia.url} 
-                alt={selectedMedia.title} 
+                src={mediaUrl(selectedMedia)} 
+                alt={selectedMedia.title ?? ""} 
                 className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl" 
               />
             )}

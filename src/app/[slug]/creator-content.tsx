@@ -6,12 +6,14 @@ import { http } from "@/lib/http-client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import CommentsSection from "./comments-section";
+import { isVideo } from "@/lib/media";
 
 export interface Media {
   id: string;
   title: string;
   url: string;
   type: string;
+  mimetype?: string;
 }
 
 export interface ContentPack {
@@ -102,11 +104,18 @@ export default function CreatorContent({
             return (
               <div key={pack.id} className="glass-panel rounded-3xl overflow-hidden border border-outline-variant/10 group bg-surface">
                 <div className="aspect-video relative overflow-hidden bg-black">
-                  <img 
-                    src={pack.media[0]?.url} 
-                    className={`w-full h-full object-cover transition-all duration-700 ${!isUnlocked ? "blur-2xl opacity-50 scale-110" : "group-hover:scale-105"}`} 
-                    alt="" 
-                  />
+                  {pack.media[0] && isVideo(pack.media[0]) ? (
+                    // Cover de video: poster/ícono, nunca <img src=video-url>
+                    <div className={`w-full h-full flex items-center justify-center transition-all duration-700 ${!isUnlocked ? "blur-2xl opacity-50 scale-110" : "group-hover:scale-105"}`}>
+                      <span className="material-symbols-outlined text-white/80 text-5xl">play_circle</span>
+                    </div>
+                  ) : (
+                    <img 
+                      src={pack.media[0]?.url} 
+                      className={`w-full h-full object-cover transition-all duration-700 ${!isUnlocked ? "blur-2xl opacity-50 scale-110" : "group-hover:scale-105"}`} 
+                      alt="" 
+                    />
+                  )}
                   
                   {!isUnlocked && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black/20 backdrop-blur-[2px]">
