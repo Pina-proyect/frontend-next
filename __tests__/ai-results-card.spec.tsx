@@ -104,6 +104,9 @@ describe('AiResultsCard — REQ-FE-4', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /regenerar/i }))
 
-    expect(await screen.findByLabelText(/nicho/i)).toHaveValue('Cine')
+    // Esperar a que el valor CAMBIE (evita race con el valor previo).
+    await waitFor(() => {
+      expect(screen.getByLabelText(/nicho/i)).toHaveValue('Cine')
+    })
   })
 })
